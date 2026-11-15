@@ -348,7 +348,8 @@
           <button class="btn btn-primary btn-sm" onclick={() => ui.openHostEditor(null)}
             >{m.action_new_host()}</button
           >
-          <button class="btn btn-sm" onclick={() => (ui.sshImportOpen = true)}
+          <!-- Wave: импорт — тихой ссылкой под главной кнопкой (две кнопки вылезали за край узкой панели). -->
+          <button class="empty-link" onclick={() => (ui.sshImportOpen = true)}
             >{m.imp_action()}</button
           >
         </EmptyState>

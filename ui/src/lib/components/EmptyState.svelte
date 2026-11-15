@@ -30,7 +30,7 @@
   {/if}
   <h3>{title}</h3>
   {#if hint}<p>{hint}</p>{/if}
-  {#if children}<div class="act">{@render children()}</div>{/if}
+  {#if children}<div class="empty-actions">{@render children()}</div>{/if}
 </div>
 
 <style>
@@ -95,8 +95,36 @@
     line-height: 1.45;
     text-wrap: pretty;
   }
-  .act {
+  .empty-actions {
     margin-top: 10px;
+    /* Wave: named `empty-actions`, not `act` — inside the host tree the global `.tree .act` (row action icons,
+       tree.css) squeezed this box to 22 px and dimmed it, so the buttons spilled past the sidebar edge. The main
+       action and an optional quiet link (`.empty-link`) stack centred and never get wider than the column. */
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    max-width: 100%;
+  }
+  .empty-actions :global(.empty-link) {
+    max-width: 100%;
+    padding: 2px 4px;
+    border: 0;
+    border-radius: 4px;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    overflow-wrap: break-word;
+    cursor: pointer;
+  }
+  .empty-actions :global(.empty-link:hover) {
+    text-decoration: underline;
+  }
+  .empty-actions :global(.empty-link:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
   .pulse {
     width: 8px;
