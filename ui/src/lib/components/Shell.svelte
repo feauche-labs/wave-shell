@@ -1,6 +1,6 @@
 <script lang="ts">
   import { isTauri } from '@tauri-apps/api/core';
-  import { onMount, type Snippet } from 'svelte';
+  import { onMount, untrack, type Snippet } from 'svelte';
   import { api } from '$lib/api';
   import { closeServer, connectAnother } from '$lib/stores/actions';
   import * as m from '$lib/paraglide/messages.js';
@@ -21,6 +21,9 @@
   import HostEditor from './HostEditor.svelte';
   import SettingsDialog from './SettingsDialog.svelte';
   import SshImportDialog from './SshImportDialog.svelte';
+  // Wave: update one click away (sheet with what is new, download, install, relaunch).
+  import UpdateSheet from '$lib/wave/UpdateSheet.svelte';
+  import { waveUpdate } from '$lib/wave/update.svelte';
   import Sidebar from './Sidebar.svelte';
   import TabBar from './TabBar.svelte';
   import Toasts from './Toasts.svelte';
@@ -28,6 +31,8 @@
   let { children }: { children: Snippet } = $props();
 
   $effect(() => () => reachability.clear());
+  // Wave: look for updates through the updater itself (latest.json of our releases), not only the GitHub API.
+  $effect(() => untrack(() => waveUpdate.watch(() => settings.updateCheck)));
 
   const native = isTauri();
   const mac = native && isMac;
@@ -193,6 +198,7 @@
 <CommandPalette />
 <SettingsDialog />
 {#if ui.sshImportOpen}<SshImportDialog />{/if}
+{#if waveUpdate.open}<UpdateSheet />{/if}
 <ConfirmDelete />
 <HostKeyDialog />
 <CloseServerDialog />

@@ -70,6 +70,22 @@ hand.
 3. Merging the PR builds five installers (macOS Apple Silicon and Intel, Windows, Linux AppImage and .deb), attaches
    them to the release with checksums and publishes it.
 
+## Auto-update
+
+Wave Shell updates itself: when a new version is out, "Version … available" appears at the bottom of the sidebar.
+Clicking it shows what is new and an "Update and restart" button — the app downloads the update, installs it and
+restarts. Works on macOS, Windows and Linux (AppImage and .deb; the .deb install asks for the administrator
+password).
+
+Updates are signed with a separate key (not a paid Apple or Microsoft certificate): the app installs only packages
+signed with it, so a swapped file is never installed. The public key is in `src-tauri/tauri.conf.json`
+(`plugins.updater.pubkey`); the private key and its password are repository secrets
+(**Settings → Secrets and variables → Actions**): `TAURI_SIGNING_PRIVATE_KEY` and
+`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Every release signs the packages and publishes `latest.json`, which the app
+reads.
+
+Do not lose the private key: without it installed copies can no longer update themselves, only by reinstalling.
+
 ## Origin and license
 
 Wave Shell is based on [iBC Shell](https://github.com/dramaformama/ibc-shell) by Georg (MIT) and regularly pulls in

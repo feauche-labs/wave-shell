@@ -1,7 +1,8 @@
 <script lang="ts">
   import * as m from '$lib/paraglide/messages.js';
-  import { api } from '$lib/api';
   import { ACCENTS, settings, type ThemeChoice } from '$lib/stores/settings.svelte';
+  import { ui } from '$lib/stores/ui.svelte';
+  import { waveUpdate } from '$lib/wave/update.svelte';
 
   /** Settings → General: appearance and app behaviour. */
   const themes: { id: ThemeChoice; label: () => string }[] = [
@@ -106,12 +107,18 @@
     />
   </label>
   <p class="note">{m.settings_update_note()}</p>
-  {#if settings.update}
-    {@const u = settings.update}
+  {#if waveUpdate.available || settings.update}
+    {@const latest = waveUpdate.available ?? settings.update?.version ?? ''}
     <div class="row">
-      <span class="lbl">{m.update_available({ version: u.version })}</span>
-      <button type="button" class="btn" onclick={() => void api.openExternal(u.url)}
-        >{m.update_open()}</button
+      <span class="lbl">{m.update_available({ version: latest })}</span>
+      <!-- Wave: the same update sheet as the sidebar banner (settings close so the sheet is on top). -->
+      <button
+        type="button"
+        class="btn"
+        onclick={() => {
+          ui.settingsOpen = false;
+          void waveUpdate.show();
+        }}>{m.wave_update_open()}</button
       >
     </div>
   {/if}

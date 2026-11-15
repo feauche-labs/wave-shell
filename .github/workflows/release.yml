@@ -50,8 +50,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: macos-arm64, os: macos-15, target: aarch64-apple-darwin, bundles: dmg }
-          - { name: macos-x64, os: macos-15-intel, target: x86_64-apple-darwin, bundles: dmg }
+          # `app` too: the self-update package for macOS is the zipped .app (`*.app.tar.gz` + `.sig`).
+          - { name: macos-arm64, os: macos-15, target: aarch64-apple-darwin, bundles: "app,dmg" }
+          - { name: macos-x64, os: macos-15-intel, target: x86_64-apple-darwin, bundles: "app,dmg" }
           - { name: windows-x64, os: windows-2022, target: x86_64-pc-windows-msvc, bundles: nsis }
           - { name: linux-x64, os: ubuntu-24.04, target: x86_64-unknown-linux-gnu, bundles: "appimage,deb" }
     steps:
@@ -103,6 +104,11 @@ jobs:
           fi
 
       - name: Build installers
+        env:
+          # Updater signing key (`createUpdaterArtifacts`): every update package gets a `.sig`; the app installs
+          # only packages signed with this key. Repository secrets, see README → «Автообновление».
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: pnpm tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
 
       - name: Collect installers
@@ -111,15 +117,30 @@ jobs:
           mkdir -p dist
           bundle="target/${{ matrix.target }}/release/bundle"
           # Постоянные имена: README ссылается на releases/latest/download/<имя>.
+          # Wave: рядом — пакеты автообновления и их подписи (.sig); подпись не зависит от имени файла.
+          one() { # one <маска> <имя в релизе>: ровно один файл, иначе ошибка
+            local found; found=$(find "$bundle" -name "$1" -print)
+            [ "$(printf '%s\n' "$found" | grep -c .)" = 1 ] || { echo "ожидался один файл $1, найдено: $found" >&2; exit 1; }
+            cp "$found" "dist/$2"
+          }
           case "${{ matrix.name }}" in
-            macos-arm64) pick() { find "$bundle" -name '*.dmg' -exec cp {} dist/Wave-Shell-macOS-Apple-Silicon.dmg \; ; } ;;
-            macos-x64) pick() { find "$bundle" -name '*.dmg' -exec cp {} dist/Wave-Shell-macOS-Intel.dmg \; ; } ;;
-            windows-x64) pick() { find "$bundle" -name '*-setup.exe' -exec cp {} dist/Wave-Shell-Windows-x64-setup.exe \; ; } ;;
-            linux-x64) pick() {
-              find "$bundle" -name '*.AppImage' -exec cp {} dist/Wave-Shell-Linux-x64.AppImage \; ;
-              find "$bundle" -name '*.deb' -exec cp {} dist/Wave-Shell-Linux-x64.deb \; ; } ;;
+            macos-arm64)
+              one '*.dmg' Wave-Shell-macOS-Apple-Silicon.dmg
+              one '*.app.tar.gz' Wave-Shell-macOS-Apple-Silicon.app.tar.gz
+              one '*.app.tar.gz.sig' Wave-Shell-macOS-Apple-Silicon.app.tar.gz.sig ;;
+            macos-x64)
+              one '*.dmg' Wave-Shell-macOS-Intel.dmg
+              one '*.app.tar.gz' Wave-Shell-macOS-Intel.app.tar.gz
+              one '*.app.tar.gz.sig' Wave-Shell-macOS-Intel.app.tar.gz.sig ;;
+            windows-x64)
+              one '*-setup.exe' Wave-Shell-Windows-x64-setup.exe
+              one '*-setup.exe.sig' Wave-Shell-Windows-x64-setup.exe.sig ;;
+            linux-x64)
+              one '*.AppImage' Wave-Shell-Linux-x64.AppImage
+              one '*.AppImage.sig' Wave-Shell-Linux-x64.AppImage.sig
+              one '*.deb' Wave-Shell-Linux-x64.deb
+              one '*.deb.sig' Wave-Shell-Linux-x64.deb.sig ;;
           esac
-          pick
           ls -l dist
 
       - name: Upload
@@ -141,6 +162,30 @@ jobs:
         with:
           path: dist
           merge-multiple: true
+
+      - name: Update manifest (latest.json)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          # Wave: what the app's updater reads (plugins.updater.endpoints → releases/latest/download/latest.json).
+          # Keys are <os>-<arch>, plus <os>-<arch>-<installer> so a .deb install updates with the .deb;
+          # a signature is the content of the matching .sig file.
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+          notes=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq .body)
+          entry() { jq -n --arg s "$(cat "dist/$1.sig")" --arg u "$base/$1" '{signature: $s, url: $u}'; }
+          jq -n --arg v "${TAG#v}" --arg n "$notes" --arg d "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson ma "$(entry Wave-Shell-macOS-Apple-Silicon.app.tar.gz)" \
+            --argjson mi "$(entry Wave-Shell-macOS-Intel.app.tar.gz)" \
+            --argjson wi "$(entry Wave-Shell-Windows-x64-setup.exe)" \
+            --argjson la "$(entry Wave-Shell-Linux-x64.AppImage)" \
+            --argjson ld "$(entry Wave-Shell-Linux-x64.deb)" \
+            '{version: $v, notes: $n, pub_date: $d, platforms: {
+              "darwin-aarch64": $ma, "darwin-aarch64-app": $ma,
+              "darwin-x86_64": $mi, "darwin-x86_64-app": $mi,
+              "windows-x86_64": $wi, "windows-x86_64-nsis": $wi,
+              "linux-x86_64": $la, "linux-x86_64-appimage": $la, "linux-x86_64-deb": $ld}}' > dist/latest.json
+          jq '.platforms |= map_values(.url)' dist/latest.json
 
       - name: Checksums
         run: cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt

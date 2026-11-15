@@ -37,6 +37,10 @@ tauri-plugin-notification = "2"
 # Local terminal (ADR-017): login shell in a PTY; MIT, the PTY layer of WezTerm.
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 portable-pty = "0.9"
+# Wave: self-update from our GitHub releases (signed with our key; latest.json in every release) and the
+# relaunch after it. Desktop only.
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 # ADR-018: private document copies.
 tempfile = "3"
 [target.'cfg(windows)'.dependencies]

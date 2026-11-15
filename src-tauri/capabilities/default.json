@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Main window: event listening (drag-drop, vault://locked) and window controls and dragging by the toolbar. App commands need no permission; the file dialog is opened by the backend, never by JS.",
+  "description": "Main window: event listening (drag-drop, vault://locked) and window controls and dragging by the toolbar. App commands need no permission; the file dialog is opened by the backend, never by JS. Wave: the update banner checks, downloads and installs a signed update and restarts the app.",
   "windows": [
     "main",
     "host-*"
@@ -14,6 +14,8 @@
     "core:window:allow-is-maximized",
     "core:window:allow-toggle-maximize",
     "core:window:allow-minimize",
-    "core:window:allow-close"
+    "core:window:allow-close",
+    "updater:default",
+    "process:allow-restart"
   ]
 }

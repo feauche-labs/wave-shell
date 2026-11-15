@@ -25,6 +25,8 @@ pub mod tray;
 #[cfg(not(desktop))]
 #[path = "tray_stub.rs"]
 pub mod tray;
+// Wave: own additions (self-update), kept apart from the iBC Shell code.
+mod wave;
 pub mod window;
 
 /// Opens the store in the app data dir and builds [`state::AppState`].
@@ -61,7 +63,7 @@ pub fn run() {
     let typed = specta.invoke_handler();
     let raw: Box<dyn Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Send + Sync> =
         Box::new(tauri::generate_handler![commands::session::shell_write]);
-    let app = tauri::Builder::default()
+    let app = wave::with_updater(tauri::Builder::default())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(move |invoke| {

@@ -17,8 +17,8 @@
   import { services } from '$lib/services/services.svelte';
   import { certTone, daysLeft } from '$lib/services/ports';
   import { snippets } from '$lib/snippets/snippets.svelte';
-  import { api } from '$lib/api';
   import { settings } from '$lib/stores/settings.svelte';
+  import { waveUpdate } from '$lib/wave/update.svelte';
   import * as m from '$lib/paraglide/messages.js';
   import { untrack } from 'svelte';
   import { hkey } from '$lib/util/tree-model';
@@ -150,15 +150,25 @@
     >
   </div>
   <Tree />
-  {#if settings.update}
-    {@const u = settings.update}
+  {#if waveUpdate.available || settings.update}
+    {@const latest = waveUpdate.available ?? settings.update?.version ?? ''}
+    <!-- Wave: opens the update sheet (what is new → update and restart) instead of the GitHub page. -->
     <button
       type="button"
       class="update"
-      title={m.update_open()}
-      onclick={() => void api.openExternal(u.url)}
+      title={m.wave_update_open()}
+      onclick={() => void waveUpdate.show()}
     >
-      <CircleArrowUp size={14} /><span>{m.update_available({ version: u.version })}</span>
+      <CircleArrowUp size={14} /><span
+        >{waveUpdate.phase === 'downloading'
+          ? m.wave_update_downloading_short({
+              version: waveUpdate.version,
+              percent: String(waveUpdate.percent)
+            })
+          : waveUpdate.phase === 'installing'
+            ? m.wave_update_installing()
+            : m.update_available({ version: latest })}</span
+      >
     </button>
   {/if}
   <footer>
