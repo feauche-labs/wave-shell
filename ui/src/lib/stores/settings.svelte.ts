@@ -43,7 +43,7 @@ function readTheme(): ThemeChoice {
   } catch {
     /* storage unavailable */
   }
-  return 'light';
+  return 'system';
 }
 
 export type Density = 'roomy' | 'compact';
