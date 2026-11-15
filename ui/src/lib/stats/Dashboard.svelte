@@ -14,6 +14,7 @@
   import { ui } from '$lib/stores/ui.svelte';
   import ServerList from './ServerList.svelte';
   import './dashboard.css';
+  import { waveTags } from '$lib/wave/tags.svelte';
 
   const VIEW_KEY = 'ibc.overview.view';
   let view = $state<'list' | 'map'>('list');
@@ -36,8 +37,13 @@
   let scroller = $state<HTMLElement | null>(null);
   const servers = $derived(fleet.servers);
   // Connected servers lead; otherwise the catalogue order (folders, then name) is kept.
+  // Wave: filter by host tag (chips after the availability filters).
+  let tagFilter = $state<string | null>(null);
+  void waveTags.load();
   const shown = $derived(
-    filterFleet(servers, query, filter).sort((x, y) => Number(!!y.group) - Number(!!x.group))
+    filterFleet(servers, query, filter)
+      .filter((s) => !tagFilter || !!s.host?.tag_ids.includes(tagFilter))
+      .sort((x, y) => Number(!!y.group) - Number(!!x.group))
   );
   const online = $derived(servers.filter((s) => s.availability === 'online').length);
   const offline = $derived(servers.filter((s) => s.availability === 'offline').length);
@@ -121,6 +127,21 @@
           >
         </button>
       {/each}
+      {#if waveTags.used.length}
+        <!-- Wave: tag filters -->
+        <span
+          aria-hidden="true"
+          style="align-self:center;width:1px;height:18px;margin:0 4px;background:var(--sep)"
+        ></span>
+        {#each waveTags.used.slice(0, 10) as t (t.id)}
+          <button
+            aria-pressed={tagFilter === t.id}
+            title={m.wave_tags_filter()}
+            onclick={() => (tagFilter = tagFilter === t.id ? null : t.id)}
+            >{t.name}<span class="tnum">{waveTags.counts.get(t.id) ?? 0}</span></button
+          >
+        {/each}
+      {/if}
     </div>
 
     {#if view === 'map'}

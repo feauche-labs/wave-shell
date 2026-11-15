@@ -14,6 +14,7 @@
   import { hkey } from '$lib/util/tree-model';
   import { ago, ms, percent } from './format';
   import Roll from './Roll.svelte';
+  import TagChips from '$lib/wave/TagChips.svelte';
   import { serverStatus } from './status';
 
   /** One server in the overview list: state, identity, load, ping, quick actions. */
@@ -63,6 +64,7 @@
         ><ServerIcon size={13} /></span
       >{/if}
     <b>{server.label}</b>
+    <TagChips ids={server.host?.tag_ids} /><!-- Wave: host tags -->
   </span>
   <span class="c-addr tnum" role="cell">{server.address}</span>
   <span class="c-folder" role="cell">{server.folder}</span>
