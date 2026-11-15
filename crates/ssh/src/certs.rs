@@ -52,13 +52,15 @@ FILES=$({
   ls -d /root/cert/*.crt /root/cert/*/fullchain.pem /root/cert/*/*.crt /root/cert/*/cert.pem 2>/dev/null
   ls -d /root/.acme.sh/*/fullchain.cer /root/.acme.sh/*/*.cer /home/*/.acme.sh/*/fullchain.cer 2>/dev/null
   ls -d /etc/ssl/*/*.crt /etc/x-ui/*.crt /etc/ssl/private/*.pem 2>/dev/null
-} | grep -v '\$' | sort -u | head -64)
+} | grep -v '\$' | grep -v '^/etc/ssl/certs/' | sort -u | head -64)
 show() {
   openssl x509 -noout -enddate -subject -issuer 2>/dev/null
 }
 printf '%s\n' "$FILES" | while IFS= read -r f; do
   [ -f "$f" ] || continue
   if [ ! -r "$f" ]; then echo '@@IBC:DENIED@@'; continue; fi
+  # Wave: a CA bundle (e.g. ca-certificates.crt, ~150 roots) is not a site certificate — a site file holds 1–3.
+  [ "$(grep -c 'BEGIN CERTIFICATE' "$f" 2>/dev/null)" -gt 10 ] && continue
   echo '@@IBC:CERT@@'
   echo "path=$f"
   openssl x509 -in "$f" -noout -enddate -subject -issuer 2>/dev/null
