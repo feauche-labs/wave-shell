@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0](https://github.com/feauche-labs/wave-shell/compare/v1.1.0...v1.2.0) (2026-11-15)
+
+
+### Добавлено
+
+* раздел «Ключи» как в Termius — плитки, добавление текстом или файлом, пароль ключа, установка на сервер; в хосте ключ выбирается из списка ([6c005c7](https://github.com/feauche-labs/wave-shell/commit/6c005c7d13217a685662a2f0adaa071b7d20dc0d))
+* теги у хостов — плашки с подсказками в окне хоста, теги в «Сводке» и фильтр по тегу ([d8a14e2](https://github.com/feauche-labs/wave-shell/commit/d8a14e265d35700602e72411bf6d9b5a81cfbe66))
+
+
+### Исправлено
+
+* в «Доменах» больше не показывается системный набор корневых сертификатов (ACCVRAIZ1) ([cbf5b0e](https://github.com/feauche-labs/wave-shell/commit/cbf5b0e08ddf02320961a61870691d6b3bf40b14))
+* вкладка больше не вылетает в отдельное окно, если её случайно вытащить за полосу вкладок ([bd84945](https://github.com/feauche-labs/wave-shell/commit/bd84945a4286f2f42f848254aceb9c1068104242))
+
+
+### Производительность
+
+* эхо в терминале без задержки — вывод после паузы сразу на экран (было +10 мс на каждую клавишу) ([727be30](https://github.com/feauche-labs/wave-shell/commit/727be305133ab928ce7c06a86c41f0e06e840063))
+
 ## [1.1.0](https://github.com/feauche-labs/wave-shell/compare/v1.0.0...v1.1.0) (2026-11-15)
 
 
