@@ -170,6 +170,8 @@ async fn pump(
     let mut buf: Vec<u8> = Vec::new();
     let mut deadline: Option<Instant> = None;
     let mut unacked: u64 = 0;
+    // Wave: time of the last flush — output after a quiet spell goes out at once (wave::coalesce).
+    let mut last_flush: Option<Instant> = None;
     let flush = |buf: &mut Vec<u8>, unacked: &mut u64| {
         if !buf.is_empty() {
             *unacked += buf.len() as u64;
@@ -190,9 +192,15 @@ async fn pump(
                     buf.extend_from_slice(&d);
                     if buf.len() >= FLUSH_BYTES {
                         flush(&mut buf, &mut unacked);
+                        last_flush = Some(Instant::now());
                         deadline = None;
                     } else if deadline.is_none() {
-                        deadline = Some(Instant::now() + FLUSH_AFTER);
+                        if crate::wave::coalesce::flush_at_once(last_flush, Instant::now(), FLUSH_AFTER) {
+                            flush(&mut buf, &mut unacked);
+                            last_flush = Some(Instant::now());
+                        } else {
+                            deadline = Some(Instant::now() + FLUSH_AFTER);
+                        }
                     }
                 }
                 None => break false,
@@ -212,6 +220,7 @@ async fn pump(
             },
             () = timer => {
                 flush(&mut buf, &mut unacked);
+                last_flush = Some(Instant::now());
                 deadline = None;
             }
         }

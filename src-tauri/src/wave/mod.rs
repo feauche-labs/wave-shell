@@ -1,5 +1,7 @@
 //! Wave Shell additions on top of iBC Shell, kept in their own module so upstream merges stay clean.
 
+pub(crate) mod coalesce;
+
 /// Self-update and the relaunch after it (desktop only).
 ///
 /// The updater reads `latest.json` from our GitHub releases (see `plugins.updater` in `tauri.conf.json`) and
