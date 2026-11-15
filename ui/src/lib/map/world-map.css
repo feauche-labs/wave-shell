@@ -1,0 +1,305 @@
+/* Styles of WorldMap.svelte, scoped under .map. */
+.map {
+  position: relative;
+  padding: 18px 18px 12px;
+}
+.map .canvas {
+  position: relative;
+  width: 100%;
+}
+.map .canvas > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.map .canvas > svg .dots {
+  stroke: color-mix(in oklab, var(--muted) 22%, transparent);
+  stroke-width: var(--dot);
+  stroke-linecap: round;
+}
+/* Country outlines sit over the dots: soft hairlines, constant width however far the map zooms. */
+.map .canvas > svg .borders,
+.map .canvas > svg .lit {
+  fill: none;
+  stroke: color-mix(in oklab, var(--muted) 42%, transparent);
+  stroke-width: 0.7px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.map .canvas > svg .lit {
+  fill: color-mix(in oklab, var(--accent) 13%, transparent);
+  stroke: color-mix(in oklab, var(--accent) 70%, transparent);
+  stroke-width: 1.1px;
+  transition: fill 160ms var(--ease);
+}
+.map .canvas > svg .lit.on {
+  fill: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+.map .canvas > svg {
+  transition: none;
+  /* The zoomed view cuts the land at the frame: fade it out instead of a hard edge. */
+  --fade: 28px;
+  mask-image:
+    linear-gradient(
+      to right,
+      transparent,
+      #000 var(--fade),
+      #000 calc(100% - var(--fade)),
+      transparent
+    ),
+    linear-gradient(
+      to bottom,
+      transparent,
+      #000 var(--fade),
+      #000 calc(100% - var(--fade)),
+      transparent
+    );
+  mask-composite: intersect;
+}
+.map .sp {
+  flex: 1;
+}
+.map .pin {
+  --c: var(--muted);
+  position: absolute;
+  transition:
+    left 300ms var(--ease),
+    top 300ms var(--ease);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  z-index: 1;
+}
+.map .pin[data-tone='connected'],
+.map .key i[data-tone='connected'] {
+  --c: var(--ok);
+}
+.map .pin[data-tone='online'],
+.map .key i[data-tone='online'] {
+  --c: var(--accent);
+}
+.map .pin[data-tone='offline'],
+.map .pin[data-tone='failed'],
+.map .key i[data-tone='offline'] {
+  --c: var(--danger);
+}
+.map .pin[data-tone='connecting'] {
+  --c: var(--warn);
+}
+.map .head {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 2.5px var(--c),
+    0 4px 12px -2px rgb(0 0 0 / 0.25);
+  transition: transform 160ms var(--ease);
+}
+.map .pin:hover .head,
+.map .pin.active .head,
+.map .pin:focus-visible .head {
+  transform: scale(1.15);
+}
+.map .pin:hover,
+.map .pin.active {
+  z-index: 3;
+}
+.map .n {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--c);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.map .pulse {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--c);
+  opacity: 0.35;
+  animation: ping 2.4s var(--ease) infinite;
+}
+@keyframes ping {
+  from {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+.map .pop {
+  position: absolute;
+  z-index: 5;
+  width: 300px;
+  max-width: 92%;
+  padding: 10px;
+  border-radius: var(--r-field);
+  background: var(--surface);
+  box-shadow:
+    var(--shadow),
+    0 0 0 0.5px var(--border);
+  transform: translate(-50%, calc(-100% - 24px));
+  animation: pop 160ms var(--ease);
+}
+.map .pop.below {
+  transform: translate(-50%, 24px);
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+.map .pop header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 8px 4px;
+}
+.map .pop header b {
+  flex: 1;
+  font-size: 13px;
+}
+.map .pop ul {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.map .pop li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 2px 0 6px;
+  border-radius: 10px;
+}
+.map .pop li:hover {
+  background: var(--hover);
+}
+.map .nm {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.map .pop small {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.map .dot[data-phase='online'] {
+  background: var(--accent);
+}
+.map .dot[data-phase='offline'] {
+  background: var(--danger);
+}
+.map .mini {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.map .mini:hover {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+.map .more {
+  margin: 6px 6px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.map footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.map .key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.map .key i {
+  --c: var(--muted);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--c);
+}
+.map .unplaced {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.map .nm em {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 400;
+}
+.map footer .btn[aria-pressed='true'] {
+  background: color-mix(in oklab, var(--accent) 14%, var(--surface));
+  color: var(--accent);
+}
+.map .geo-offer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: var(--r-field);
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface-2));
+  color: var(--accent);
+}
+.map .geo-offer p {
+  flex: 1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.map .geo-offer b {
+  display: block;
+  color: var(--text);
+  font-size: 13px;
+}

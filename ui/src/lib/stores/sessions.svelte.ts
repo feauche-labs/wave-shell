@@ -1,0 +1,281 @@
+/**
+ * Open tabs. The shell owns only the tab list and selection; terminal / SFTP content is rendered
+ * by their own routes (terminal-ui / sftp-ui) which attach a real session to a tab.
+ */
+import type { HostId, QuickConnect } from '$lib/api';
+
+/** `status` is the server's metrics page; it has no connection of its own (it reads the terminal's). */
+export type TabKind = 'terminal' | 'sftp' | 'status';
+
+/** Connection state shown next to a tab (sidebar dot, tab dot). */
+export type TabPhase = 'connecting' | 'connected' | 'failed' | 'disconnected';
+
+export interface Tab {
+  id: string;
+  kind: TabKind;
+  hostId: HostId | null;
+  label: string;
+  /** Flag code already resolved for display, or null. */
+  flag: string | null;
+  adhoc: QuickConnect | null;
+  /** Which window of the host this is: the same server can be open several times (1 = first). */
+  instance?: number;
+  /** Opened for monitoring (startup, group connect): live, but not shown in the tab bar until the user opens it. */
+  background?: boolean;
+  /** The local terminal (this computer's shell): lives in the sidebar, never in the tab bar. */
+  local?: boolean;
+}
+
+/** One server in the tab bar / sidebar: its terminal and files views share a group. */
+export interface TabGroup {
+  key: string;
+  label: string;
+  flag: string | null;
+  tabs: Tab[];
+  /** The member shown when the group is selected. */
+  current: Tab;
+}
+
+/** Tabs of one window of a stored host form a group; ad-hoc tabs stand alone. */
+export const groupKey = (t: Tab): string =>
+  t.hostId ? `h:${t.hostId}${(t.instance ?? 1) > 1 ? `#${t.instance}` : ''}` : t.id;
+
+class SessionsStore {
+  tabs = $state.raw<Tab[]>([]);
+  activeId = $state<string | null>(null);
+  /** Per-tab connection state, reported by the terminal / SFTP views. */
+  phases = $state<Record<string, TabPhase>>({});
+  /** Backend session id per terminal tab, once connected (stats use it). */
+  sessionIds = $state<Record<string, string>>({});
+  /** Terminal tabs with output the user has not looked at yet (dot on the tab / sidebar). */
+  activity = $state<Record<string, true>>({});
+  /** Last active tab per group, so switching servers returns to the same view. */
+  #last = new Map<string, string>();
+  #seq = 0;
+
+  /** Servers (the local terminal is not one: it has its own sidebar row). */
+  get groups(): TabGroup[] {
+    const out = new Map<string, Tab[]>();
+    for (const t of this.tabs) {
+      if (t.local) continue;
+      const k = groupKey(t);
+      out.set(k, [...(out.get(k) ?? []), t]);
+    }
+    return [...out].map(([key, tabs]) => {
+      const first = tabs[0]!;
+      const current =
+        tabs.find((t) => t.id === this.activeId) ??
+        tabs.find((t) => t.id === this.#last.get(key)) ??
+        first;
+      return { key, label: first.label, flag: first.flag, tabs, current };
+    });
+  }
+
+  /** Servers with at least one tab the user has opened; the rest only feed the overview. */
+  get visibleGroups(): TabGroup[] {
+    return this.groups.filter((g) => g.tabs.some((t) => !t.background));
+  }
+
+  get activeGroup(): string | null {
+    return this.active && !this.active.local ? groupKey(this.active) : null;
+  }
+
+  /** The always-running local terminal, once started. */
+  get localTab(): Tab | null {
+    return this.tabs.find((t) => t.local) ?? null;
+  }
+
+  /** Starts the local terminal in the background (idempotent); it is never closed. */
+  ensureLocal(label: string): Tab {
+    return (
+      this.localTab ??
+      this.open(
+        { kind: 'terminal', hostId: null, label, flag: null, adhoc: null, local: true },
+        false
+      )
+    );
+  }
+
+  /** Shows the local terminal (starting it if needed). */
+  openLocal(label: string): void {
+    this.select(this.ensureLocal(label).id);
+  }
+
+  /** New output in a tab the user is not looking at. */
+  markActivity(id: string): void {
+    if (id !== this.activeId && !this.activity[id]) this.activity[id] = true;
+  }
+
+  /** True when any view of the group has unseen output. */
+  groupActivity(g: TabGroup): boolean {
+    return g.tabs.some((t) => this.activity[t.id]);
+  }
+
+  /**
+   * Drag-and-drop in the tab bar: moves server `key` to position `to` among the shown servers.
+   * Background servers and the local terminal keep their place after them.
+   */
+  moveGroup(key: string, to: number): void {
+    const keys = this.visibleGroups.map((g) => g.key);
+    const from = keys.indexOf(key);
+    if (from === -1) return;
+    const target = Math.max(0, Math.min(keys.length - 1, to));
+    if (target === from) return;
+    keys.splice(from, 1);
+    keys.splice(target, 0, key);
+    const rank = new Map(keys.map((k, i) => [k, i]));
+    const order = (t: Tab) => (t.local ? keys.length + 1 : (rank.get(groupKey(t)) ?? keys.length));
+    // Stable sort keeps each server's views (and the hidden servers) in their old order.
+    this.tabs = this.tabs
+      .map((t, i) => ({ t, i }))
+      .sort((a, b) => order(a.t) - order(b.t) || a.i - b.i)
+      .map((x) => x.t);
+  }
+
+  /** One dot for a server: connected wins, then connecting, then the current view's state. */
+  groupPhase(g: TabGroup): TabPhase {
+    const views = g.tabs.filter((t) => t.kind !== 'status');
+    const ps = views.map((t) => this.phase(t.id));
+    if (ps.includes('connected')) return 'connected';
+    if (ps.includes('connecting')) return 'connecting';
+    const cur = views.find((t) => t.id === g.current.id) ?? views[0];
+    return cur ? this.phase(cur.id) : 'disconnected';
+  }
+
+  /** Selects a group (its last used view). */
+  activate(key: string): void {
+    const g = this.groups.find((x) => x.key === key);
+    if (g) this.select(g.current.id);
+  }
+
+  select(id: string): void {
+    const t = this.tabs.find((x) => x.id === id);
+    if (!t) return;
+    // Opening a background server is what makes it a tab.
+    if (t.background)
+      this.tabs = this.tabs.map((x) => (x.id === id ? { ...x, background: false } : x));
+    this.#last.set(groupKey(t), id);
+    this.activeId = id;
+    if (this.activity[id]) delete this.activity[id];
+  }
+
+  /** Closes every view of a server (disconnect). */
+  closeGroup(key: string): void {
+    for (const t of this.tabs.filter((x) => !x.local && groupKey(x) === key)) this.close(t.id);
+  }
+
+  /**
+   * Takes a server off the tab bar but keeps it connected for monitoring. Its status view (no
+   * connection of its own) is closed; terminal and files stay alive behind the overview.
+   */
+  hideGroup(key: string): void {
+    const mine = this.tabs.filter((t) => !t.local && groupKey(t) === key);
+    if (!mine.length) return;
+    for (const t of mine.filter((x) => x.kind === 'status')) {
+      delete this.phases[t.id];
+      delete this.sessionIds[t.id];
+    }
+    this.tabs = this.tabs
+      .filter((t) => groupKey(t) !== key || t.kind !== 'status')
+      .map((t) => (groupKey(t) === key ? { ...t, background: true } : t));
+    if (this.activeId && mine.some((t) => t.id === this.activeId)) {
+      const next = this.visibleGroups[0];
+      this.activeId = next ? next.current.id : null;
+    }
+  }
+
+  phase(id: string): TabPhase {
+    return this.phases[id] ?? 'connecting';
+  }
+
+  setSessionId(tabId: string, sid: string | null): void {
+    if (sid) this.sessionIds[tabId] = sid;
+    else delete this.sessionIds[tabId];
+  }
+
+  /** The group a tab belongs to. */
+  groupOf(tabId: string): TabGroup | null {
+    return this.groups.find((g) => g.tabs.some((t) => t.id === tabId)) ?? null;
+  }
+
+  /** Session id of a server group's terminal (metrics run over it). */
+  groupSession(g: TabGroup): string | null {
+    const t = g.tabs.find((x) => x.kind === 'terminal' && this.sessionIds[x.id]);
+    return t ? (this.sessionIds[t.id] ?? null) : null;
+  }
+
+  setPhase(id: string, phase: TabPhase): void {
+    if (!this.tabs.some((t) => t.id === id)) return;
+    if (this.phases[id] !== phase) this.phases[id] = phase;
+  }
+
+  /** The tab of `kind` already open in that window of `hostId`, if any. */
+  find(hostId: HostId, kind: TabKind, instance = 1): Tab | null {
+    return (
+      this.tabs.find(
+        (t) => t.hostId === hostId && t.kind === kind && (t.instance ?? 1) === instance
+      ) ?? null
+    );
+  }
+
+  /** The lowest window number of `hostId` not in use. */
+  nextInstance(hostId: HostId): number {
+    const used = new Set(this.tabs.filter((t) => t.hostId === hostId).map((t) => t.instance ?? 1));
+    let n = 1;
+    while (used.has(n)) n++;
+    return n;
+  }
+
+  get active(): Tab | null {
+    return this.tabs.find((t) => t.id === this.activeId) ?? null;
+  }
+
+  /** Adds a tab; `focus = false` opens it in the background (e.g. a terminal behind Status). */
+  open(tab: Omit<Tab, 'id'>, focus = true): Tab {
+    const t: Tab = { ...tab, id: `tab-${++this.#seq}`, background: !focus };
+    this.tabs = [...this.tabs, t];
+    if (focus) this.select(t.id);
+    return t;
+  }
+
+  close(id: string): void {
+    const i = this.tabs.findIndex((t) => t.id === id);
+    if (i === -1) return;
+    const closing = this.tabs[i]!;
+    this.tabs = this.tabs.filter((t) => t.id !== id);
+    delete this.phases[id];
+    delete this.sessionIds[id];
+    delete this.activity[id];
+    if (this.activeId === id) {
+      // Prefer the other view of the same server, then the neighbour.
+      const shown = this.tabs.filter((t) => !t.background && !t.local);
+      const sibling = shown.find((t) => groupKey(t) === groupKey(closing));
+      const near = shown.length ? shown[Math.min(i, shown.length - 1)] : undefined;
+      this.activeId = sibling?.id ?? near?.id ?? null;
+    }
+  }
+
+  /** ⌘1…9 / ⌃Tab navigation over servers. */
+  step(delta: 1 | -1): void {
+    const gs = this.visibleGroups;
+    if (gs.length < 2) return;
+    const i = gs.findIndex((g) => g.key === this.activeGroup);
+    const g = gs[(i + delta + gs.length) % gs.length];
+    if (g) this.select(g.current.id);
+  }
+
+  hasHost(hostId: HostId): boolean {
+    return this.tabs.some((t) => t.hostId === hostId);
+  }
+
+  clear(): void {
+    this.tabs = [];
+    this.phases = {};
+    this.sessionIds = {};
+    this.activity = {};
+    this.#last.clear();
+    this.activeId = null;
+  }
+}
+
+export const sessions = new SessionsStore();

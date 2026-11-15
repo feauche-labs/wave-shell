@@ -1,0 +1,49 @@
+*.log
+.DS_Store
+.claude/worktrees/
+.env
+node_modules/
+src-tauri/gen/
+target/
+tests/fixtures/keys/
+ui/.svelte-kit/
+ui/build/
+ui/src/lib/paraglide/
+
+# Файлы для ИИ-ассистентов (только локально)
+.claude/
+CLAUDE.md
+AGENTS.md
+KICKOFF.md
+docs/HANDOFF.md
+docs/STATUS.md
+ui/PRODUCT.md
+.impeccable/
+
+# --- Wave Shell: только на этом компьютере, в git не отдаём ---
+# Личные заметки и рабочие файлы.
+/local/
+CLAUDE.md
+AGENTS.md
+.claude/
+# Резервные копии приложения: внутри серверы, пароли и ключи.
+*.tlvault
+# Ключи подписи, сертификаты, профили.
+*.key
+*.pem
+*.p8
+*.p12
+*.pfx
+*.cer
+*.mobileprovision
+*.keystore
+*.jks
+# Пароли и токены.
+.env
+.env.*
+!.env.example
+# Файл автора без секретов (переключает интерфейс на настоящий сервер вместо демо).
+!ui/.env.tauri
+# Настройки редактора.
+.vscode/
+.idea/

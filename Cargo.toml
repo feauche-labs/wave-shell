@@ -1,0 +1,47 @@
+[workspace]
+resolver = "2"
+members = ["crates/store", "crates/vault", "crates/ssh", "crates/sftp", "crates/geo", "src-tauri"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v7", "serde"] }
+secrecy = { version = "0.10", features = ["serde"] }
+zeroize = { version = "1", features = ["zeroize_derive"] }
+tokio = { version = "1", features = ["rt", "sync", "io-util", "macros"] }
+# specta is pre-1.0: pin exactly (tauri-specta requirement), see ADR-004.
+specta = { version = "=2.0.0-rc.26", features = ["derive", "uuid", "serde_json"] }
+specta-typescript = "=0.0.13"
+tauri-specta = { version = "=2.0.0-rc.26", features = ["derive", "typescript"] }
+# ring backend (ADR-002): the default aws-lc-rs pulls aws-lc-sys (MIT-0, not allowed by deny.toml).
+russh = { version = "0.65", default-features = false, features = ["ring", "rsa", "flate2"] }
+ibc-shell-store = { path = "crates/store" }
+ibc-shell-vault = { path = "crates/vault" }
+ibc-shell-ssh = { path = "crates/ssh" }
+ibc-shell-sftp = { path = "crates/sftp" }
+ibc-shell-geo = { path = "crates/geo" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "s"

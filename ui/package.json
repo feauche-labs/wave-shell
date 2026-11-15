@@ -1,0 +1,52 @@
+{
+  "name": "ui",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm i18n && vite dev",
+    "build": "pnpm i18n && vite build",
+    "dev:app": "pnpm i18n && vite dev --mode tauri",
+    "build:app": "pnpm i18n && vite build --mode tauri",
+    "preview": "vite preview",
+    "check": "pnpm i18n && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "lint": "prettier --check . && eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "i18n": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@inlang/paraglide-js": "^3.2.0",
+    "@inlang/plugin-message-format": "^4.6.0",
+    "@sveltejs/adapter-static": "^4.0.1",
+    "@sveltejs/kit": "^3.1.1",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tailwindcss/vite": "^4.3.5",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-svelte": "^3.24.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-svelte": "^4.1.1",
+    "svelte": "^5.57.3",
+    "svelte-check": "^4.7.8",
+    "tailwindcss": "^4.3.5",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "@lucide/svelte": "^1.69.0",
+    "@tauri-apps/api": "^2.12.4",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/addon-search": "^0.15.0",
+    "@xterm/addon-serialize": "^0.14.0",
+    "@xterm/addon-unicode11": "^0.8.0",
+    "@xterm/addon-web-links": "^0.11.0",
+    "@xterm/addon-webgl": "^0.18.0",
+    "@xterm/xterm": "^5.5.0",
+    "bits-ui": "^2.20.6"
+  }
+}

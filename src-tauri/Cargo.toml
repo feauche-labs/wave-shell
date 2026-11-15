@@ -1,0 +1,49 @@
+[package]
+name = "ibc-shell"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+default-run = "ibc-shell"
+
+[lib]
+name = "ibc_shell_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+secrecy.workspace = true
+thiserror.workspace = true
+specta.workspace = true
+specta-typescript.workspace = true
+tauri-specta.workspace = true
+ibc-shell-store.workspace = true
+ibc-shell-vault.workspace = true
+ibc-shell-ssh.workspace = true
+ibc-shell-sftp.workspace = true
+zeroize.workspace = true
+# Prompt timeouts + oneshot/mpsc in the session pump (rt is provided by Tauri).
+tokio = { workspace = true, features = ["time", "sync", "macros", "net"] }
+tauri-plugin-dialog = "2"
+# System notifications when a background command finishes (ADR-017); shown by the backend.
+tauri-plugin-notification = "2"
+
+# Local terminal (ADR-017): login shell in a PTY; MIT, the PTY layer of WezTerm.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+portable-pty = "0.9"
+# ADR-018: private document copies.
+tempfile = "3"
+[target.'cfg(windows)'.dependencies]
+# ShellExecute expects ordinary Windows paths where possible.
+dunce = "1"
+# ADR-018: native file associations via ShellExecute.
+open = { version = "5", features = ["shellexecute-on-windows"] }
+
+[lints]
+workspace = true

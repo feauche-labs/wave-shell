@@ -1,0 +1,237 @@
+@import './file-table.css';
+@import './transfers.css';
+@import './dialogs.css';
+
+/* SFTP screen. Light, flat, hairline borders; tokens from app.css. */
+.sf-screen {
+  --sf-cols: minmax(64px, 1fr) var(--sf-c-size, 76px) var(--sf-c-mtime, 142px)
+    var(--sf-c-mode, 96px);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.sf-screen .muted {
+  color: var(--muted);
+}
+.sf-screen .mono,
+.sf-dialog .mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.sf-screen .sr,
+.sf-dialog .sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.sf-screen .push {
+  margin-left: auto;
+}
+.sf-screen .tag,
+.sf-dialog .tag {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  line-height: 18px;
+}
+.sf-screen .spin {
+  animation: sf-spin 0.9s linear infinite;
+}
+@keyframes sf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.sf-state {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  text-align: center;
+  padding: 24px;
+}
+.sf-state p {
+  margin: 0;
+}
+
+/* panes */
+.sf-panes {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.sf-split {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  margin-left: -3px;
+  z-index: 3;
+  cursor: col-resize;
+}
+.sf-split:hover,
+.sf-split:focus-visible {
+  outline: none;
+  background: linear-gradient(var(--accent), var(--accent)) center / 2px 100% no-repeat;
+  opacity: 0.6;
+}
+.sf-slot {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+.sf-slot + .sf-slot {
+  border-left: 0.5px solid var(--border);
+}
+.sf-pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px transparent;
+  transition: box-shadow 120ms var(--ease);
+}
+.sf-pane.dropping {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.sf-bar {
+  display: grid;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 0.5px solid var(--border);
+}
+.sf-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.sf-source {
+  height: var(--control-h);
+  max-width: 180px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  padding: 0 28px 0 10px;
+}
+.sf-nav {
+  display: flex;
+}
+.sf-pane.active .sf-source {
+  border-color: color-mix(in oklab, var(--accent) 50%, var(--border));
+}
+.sf-tools .sf-filter {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--control-h);
+  padding: 0 8px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-control);
+  color: var(--muted);
+}
+.sf-filter:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.sf-filter input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+.sf-screen .icon-btn.on {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.sf-screen .icon-btn:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.sf-foot {
+  padding: 4px 10px;
+  border-top: 0.5px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* breadcrumbs */
+.sf-crumbs {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: var(--control-h);
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-radius: var(--r-control);
+  cursor: text;
+}
+.sf-crumbs:hover {
+  background: var(--surface-2);
+}
+.sf-crumbs nav {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0 2px;
+}
+.crumb {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  padding: 2px 5px;
+  border-radius: var(--r-control);
+  cursor: pointer;
+}
+.crumb:hover {
+  background: var(--border);
+  color: var(--text);
+}
+.crumb.cur {
+  color: var(--text);
+  font-weight: 500;
+}
+.sf-crumbs .sep {
+  color: var(--muted);
+  opacity: 0.6;
+}
+.sf-edit-hit {
+  flex: 1;
+  align-self: stretch;
+  min-width: 16px;
+  border: 0;
+  background: transparent;
+  cursor: text;
+}
+.sf-path-input {
+  flex: 1;
+  min-width: 0;
+  height: var(--control-h);
+  padding: 0 8px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--text);
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}

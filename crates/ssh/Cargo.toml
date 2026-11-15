@@ -1,0 +1,25 @@
+[package]
+name = "ibc-shell-ssh"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+secrecy.workspace = true
+zeroize.workspace = true
+specta.workspace = true
+# SSH protocol implementation (client, keys, agent); ring backend, see workspace Cargo.toml.
+russh.workspace = true
+# Byte buffers for the shell stream (already in russh's tree).
+bytes = "1"
+# Domain-name resolution + timeouts + spawn for the shell pump.
+tokio = { workspace = true, features = ["net", "time", "rt", "sync", "io-util", "macros"] }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "net", "time", "test-util"] }
