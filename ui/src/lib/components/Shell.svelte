@@ -24,6 +24,7 @@
   // Wave: update one click away (sheet with what is new, download, install, relaunch).
   import UpdateSheet from '$lib/wave/UpdateSheet.svelte';
   import { waveUpdate } from '$lib/wave/update.svelte';
+  import { waveKeys } from '$lib/wave/keys.svelte';
   import Sidebar from './Sidebar.svelte';
   import TabBar from './TabBar.svelte';
   import Toasts from './Toasts.svelte';
@@ -33,6 +34,8 @@
   $effect(() => () => reachability.clear());
   // Wave: look for updates through the updater itself (latest.json of our releases), not only the GitHub API.
   $effect(() => untrack(() => waveUpdate.watch(() => settings.updateCheck)));
+  // Wave: key count in the sidebar from the start.
+  $effect(() => untrack(() => void waveKeys.load()));
 
   const native = isTauri();
   const mac = native && isMac;

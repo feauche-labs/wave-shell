@@ -10,6 +10,10 @@
   import DefaultsFields from './DefaultsFields.svelte';
   import FlagPicker from './FlagPicker.svelte';
   import Sheet from './Sheet.svelte';
+  // Wave: tags of the host and a key picked from the Keys section.
+  import TagInput from '$lib/wave/TagInput.svelte';
+  import { waveTags } from '$lib/wave/tags.svelte';
+  import { sessions } from '$lib/stores/sessions.svelte';
 
   let { id, folderId }: { id: string | null; folderId: string | null } = $props();
 
@@ -36,8 +40,16 @@
   let passphrase = $state('');
   let identity = $state.raw<IdentityDto | null>(null);
   let keyIdentity = $state.raw<IdentityDto | null>(null);
+  // Wave: keys of the Keys section to pick from; tags as names until save.
+  let keys = $state.raw<IdentityDto[]>([]);
+  let needPass = $state(false);
+  let tagNames = $state<string[]>([]);
+  void waveTags.load().then(() => {
+    if (host) tagNames = waveTags.names(host.tag_ids);
+  });
 
   void api.identityList().then((r) => {
+    if (r.status === 'ok') keys = r.data.filter((i) => i.kind !== 'password');
     if (r.status !== 'ok' || !host?.identity_id) return;
     identity = r.data.find((i) => i.id === host.identity_id) ?? null;
     if (identity && identity.kind !== 'password') {
@@ -68,9 +80,32 @@
 
   async function chooseKey() {
     const r = await api.identityImportFile(passphrase || null);
+    if (r.status === 'error') {
+      // Wave: an encrypted key — ask for its passphrase right here, then the user picks the file again.
+      if (r.error.code === 'Validation' && /passphrase/.test(r.error.detail ?? '')) {
+        needPass = true;
+        return ui.toast(
+          /wrong/.test(r.error.detail ?? '')
+            ? m.wave_keys_passphrase_wrong()
+            : m.wave_keys_passphrase_need(),
+          'error'
+        );
+      }
+      return ui.toast(errorText(r.error), 'error');
+    }
     passphrase = '';
-    if (r.status === 'error') return ui.toast(errorText(r.error), 'error');
-    if (r.data) keyIdentity = r.data;
+    needPass = false;
+    if (r.data) {
+      keyIdentity = r.data;
+      keys = [...keys.filter((k) => k.id !== r.data?.id), r.data];
+    }
+  }
+
+  /** Wave: go to the Keys section (the editor closes; unsaved edits stay unsaved). */
+  function openKeys() {
+    ui.closeEditor();
+    ui.page = 'keys';
+    sessions.activeId = null;
   }
 
   /** Resolves the identity id to store on the host, writing a new password into the vault. */
@@ -102,6 +137,13 @@
     const idn = await signIn(name);
     if (idn === false) return (busy = false);
     defaults.identity = idn ?? '';
+    // Wave: tag names → ids (new tags are created here).
+    const tagIds = await waveTags.ensure(tagNames);
+    if (tagIds === null) {
+      error = m.err_generic();
+      return (busy = false);
+    }
+    const tagsChanged = !host || [...tagIds].sort().join() !== [...host.tag_ids].sort().join();
     let ok: boolean;
     if (host) {
       ok = await tree.updateHost(host.id, {
@@ -109,6 +151,7 @@
         ...(hostname.trim() !== host.hostname ? { hostname: hostname.trim() } : {}),
         ...(flag !== host.country_code ? { country_code: flag } : {}),
         ...(notes !== (host.notes ?? '') ? { notes: notes || null } : {}),
+        ...(tagsChanged ? { tag_ids: tagIds } : {}),
         ...toPatch(formFrom(host), defaults)
       });
     } else {
@@ -119,7 +162,7 @@
           hostname: hostname.trim(),
           country_code: flag,
           notes: notes || null,
-          tag_ids: [],
+          tag_ids: tagIds,
           ...toValues(defaults)
         })) !== null;
     }
@@ -169,6 +212,10 @@
           autocomplete="off"
           placeholder={hostname.trim() || m.host_name_hint()}
         />
+      </div>
+      <div class="fld">
+        <label for="h-tags">{m.wave_tags()}</label>
+        <TagInput id="h-tags" bind:names={tagNames} />
       </div>
       <div class="fld">
         <span class="lbl">{m.field_flag()}</span>
@@ -229,30 +276,49 @@
           {#if passwordSaved && savedPw === null}<p class="note">{m.password_saved()}</p>{/if}
         </div>
       {:else}
-        {#if keyIdentity}
-          <div class="key">
-            <FileKey size={16} />
-            <div class="key-meta">
-              <span>{m.key_current({ name: keyIdentity.label })}</span>
-              {#if keyIdentity.key_fingerprint}<span class="mono fp"
-                  >{keyIdentity.key_algo} · {keyIdentity.key_fingerprint}</span
-                >{/if}
-            </div>
+        <!-- Wave: the key is picked from the Keys section (added there or from a file right here). -->
+        <div class="fld">
+          <label for="h-key">{m.wave_host_key()}</label>
+          {#if keys.length}
+            <select
+              id="h-key"
+              class="input"
+              value={keyIdentity?.id ?? ''}
+              onchange={(e) =>
+                (keyIdentity = keys.find((k) => k.id === e.currentTarget.value) ?? null)}
+            >
+              <option value="" disabled>{m.wave_host_key_pick()}</option>
+              {#each keys as k (k.id)}<option value={k.id}
+                  >{k.label}{k.key_algo ? ` · ${k.key_algo}` : ''}</option
+                >{/each}
+            </select>
+            {#if keyIdentity?.key_fingerprint}<p class="note mono fp">
+                {keyIdentity.key_fingerprint}
+              </p>{/if}
+          {:else}
+            <p class="note">{m.wave_host_key_none()}</p>
+          {/if}
+        </div>
+        {#if needPass}
+          <div class="fld">
+            <label for="h-pp">{m.key_passphrase()}</label>
+            <input
+              id="h-pp"
+              class="input"
+              type="password"
+              bind:value={passphrase}
+              autocomplete="off"
+            />
           </div>
         {/if}
-        <div class="fld">
-          <label for="h-pp">{m.key_passphrase()}</label>
-          <input
-            id="h-pp"
-            class="input"
-            type="password"
-            bind:value={passphrase}
-            autocomplete="off"
-          />
+        <div class="key-acts">
+          <button type="button" class="btn btn-sm" onclick={chooseKey}
+            ><FileKey size={14} />{m.wave_host_key_file()}</button
+          >
+          <button type="button" class="btn btn-sm" onclick={openKeys}
+            ><KeyRound size={14} />{m.wave_host_key_open()}</button
+          >
         </div>
-        <button type="button" class="btn" onclick={chooseKey}
-          ><FileKey size={14} />{m.key_choose()}</button
-        >
       {/if}
     </section>
 
@@ -317,21 +383,11 @@
     gap: 4px;
     align-items: center;
   }
-  .key {
+  /* Wave: actions under the key picker. */
+  .key-acts {
     display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    padding: 10px 12px;
-    border: 0.5px solid var(--border);
-    border-radius: var(--r-control);
-    background: var(--surface-2);
-    color: var(--accent);
-  }
-  .key-meta {
-    display: grid;
-    gap: 2px;
-    min-width: 0;
-    color: var(--text);
+    flex-wrap: wrap;
+    gap: 8px;
   }
   .fp {
     color: var(--muted);

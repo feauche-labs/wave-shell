@@ -3,6 +3,7 @@
     Box,
     FolderPlus,
     Keyboard,
+    KeyRound,
     LayoutGrid,
     Lock,
     Plus,
@@ -19,6 +20,7 @@
   import { snippets } from '$lib/snippets/snippets.svelte';
   import { settings } from '$lib/stores/settings.svelte';
   import { waveUpdate } from '$lib/wave/update.svelte';
+  import { waveKeys } from '$lib/wave/keys.svelte';
   import * as m from '$lib/paraglide/messages.js';
   import { untrack } from 'svelte';
   import { hkey } from '$lib/util/tree-model';
@@ -95,6 +97,14 @@
       label: m.panel_snippets(),
       icon: Zap,
       count: snippets.items.length,
+      alert: false
+    },
+    // Wave: the Keys section (like Termius Keychain).
+    {
+      id: 'keys' as const,
+      label: m.wave_keys_title(),
+      icon: KeyRound,
+      count: waveKeys.count,
       alert: false
     }
   ]);

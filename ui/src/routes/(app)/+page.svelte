@@ -3,6 +3,7 @@
   import FleetCerts from '$lib/fleetpages/FleetCerts.svelte';
   import FleetDocker from '$lib/fleetpages/FleetDocker.svelte';
   import SnippetsPage from '$lib/fleetpages/SnippetsPage.svelte';
+  import KeysPage from '$lib/wave/KeysPage.svelte'; // Wave: the Keys section
   import SidePanel from '$lib/stats/SidePanel.svelte';
   import StatusView from '$lib/stats/StatusView.svelte';
   import RunDialog from '$lib/snippets/RunDialog.svelte';
@@ -31,7 +32,8 @@
     {/if}
     {#if !tab}
       {#if ui.page === 'docker'}<FleetDocker />{:else if ui.page === 'domains'}<FleetCerts
-        />{:else if ui.page === 'snippets'}<SnippetsPage />{:else}<Dashboard />{/if}
+        />{:else if ui.page === 'snippets'}<SnippetsPage />{:else if ui.page === 'keys'}<KeysPage
+        />{:else}<Dashboard />{/if}
     {:else if tab.kind === 'status'}
       {#key tab.id}<StatusView {tab} />{/key}
     {/if}
