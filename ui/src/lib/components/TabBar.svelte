@@ -19,7 +19,7 @@
   import { ui } from '$lib/stores/ui.svelte';
   import { mod } from '$lib/util/platform';
   import WindowControls from './WindowControls.svelte';
-  import { canOpenHostWindow, detachGroup, isHostWindow } from './host-window';
+  import { isHostWindow } from './host-window';
   import TabMenu from './TabMenu.svelte';
   import { TabDrag } from './tab-drag.svelte';
 
@@ -35,12 +35,9 @@
     () => [...tabsEl.querySelectorAll<HTMLElement>('[data-tab-key]')],
     (key, to) => sessions.moveGroup(key, to),
     () => tabsEl.getBoundingClientRect(),
-    (key) => {
-      if (!canOpenHostWindow || !sessions.groups.find((g) => g.key === key)?.current.hostId)
-        return false;
-      void detachGroup(key);
-      return true;
-    }
+    // Wave: no separate window by dragging a tab out of the bar — it happened by accident. A tab dropped
+    // outside just goes back; «Open in a separate window» stays in the tab menu.
+    () => false
   );
 
   function onKey(e: KeyboardEvent, i: number) {
