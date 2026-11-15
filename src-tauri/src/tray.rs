@@ -162,25 +162,49 @@ fn seg_dist(p: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
     ((p.0 - a.0 - t * dx).powi(2) + (p.1 - a.1 - t * dy).powi(2)).sqrt()
 }
 
-/// The logo's prompt chevron and dot as a black template image (alpha only), antialiased.
+/// Wave: the logo's wave (`M52 66c4.7-7 9.3-7 14 0s9.3 7 14 0`, two cubic Béziers) as a polyline.
+fn wave_polyline(map: &dyn Fn(f32, f32) -> (f32, f32)) -> Vec<(f32, f32)> {
+    const CURVES: [[(f32, f32); 4]; 2] = [
+        [(52.0, 66.0), (56.7, 59.0), (61.3, 59.0), (66.0, 66.0)],
+        [(66.0, 66.0), (70.7, 73.0), (75.3, 73.0), (80.0, 66.0)],
+    ];
+    let mut points = Vec::with_capacity(2 * 17);
+    for c in CURVES {
+        for step in 0_u16..=16 {
+            let t = f32::from(step) / 16.0;
+            let mt = 1.0 - t;
+            let w = [mt * mt * mt, 3.0 * mt * mt * t, 3.0 * mt * t * t, t * t * t];
+            let x = w[0] * c[0].0 + w[1] * c[1].0 + w[2] * c[2].0 + w[3] * c[3].0;
+            let y = w[0] * c[0].1 + w[1] * c[1].1 + w[2] * c[2].1 + w[3] * c[3].1;
+            points.push(map(x, y));
+        }
+    }
+    points
+}
+
+/// The logo's prompt chevron and wave as a black template image (alpha only), antialiased.
 fn glyph() -> Vec<u8> {
     // Logo coordinates (100 × 100 viewBox) mapped onto the icon, content centred.
-    let scale = 0.6_f32;
-    let (cx, cy) = (51.0_f32, 52.0_f32);
+    // Wave: the wave is wider than the old dot, so the drawing is a little smaller and re-centred to fit.
+    let scale = 0.54_f32;
+    let (cx, cy) = (52.0_f32, 52.0_f32);
     let half = 18.0_f32;
     let map = |x: f32, y: f32| ((x - cx) * scale + half, (y - cy) * scale + half);
     let (a, b, c) = (map(24.0, 33.0), map(46.0, 50.0), map(24.0, 67.0));
-    let dot = map(67.0, 66.0);
+    let wave = wave_polyline(&map);
     let stroke = 7.0 * scale / 2.0;
-    let radius = 12.0 * scale;
     let mut px = Vec::with_capacity((SIZE * SIZE * 4) as usize);
     for y in 0..SIZE {
         for x in 0..SIZE {
             #[allow(clippy::cast_precision_loss)]
             let p = (x as f32 + 0.5, y as f32 + 0.5);
             let d_line = seg_dist(p, a, b).min(seg_dist(p, b, c)) - stroke;
-            let d_dot = ((p.0 - dot.0).powi(2) + (p.1 - dot.1).powi(2)).sqrt() - radius;
-            let cover = (0.5 - d_line.min(d_dot)).clamp(0.0, 1.0);
+            let d_wave = wave
+                .windows(2)
+                .map(|s| seg_dist(p, s[0], s[1]))
+                .fold(f32::INFINITY, f32::min)
+                - stroke;
+            let cover = (0.5 - d_line.min(d_wave)).clamp(0.0, 1.0);
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             let alpha = (cover * 255.0).round() as u8;
             px.extend_from_slice(&[0, 0, 0, alpha]);

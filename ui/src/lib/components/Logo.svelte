@@ -11,16 +11,24 @@
   aria-hidden="true"
   focusable="false"
 >
-  <rect width="100" height="100" rx="22" fill="#05070b" />
+  <!-- Wave: знак Wave Shell — стрелка и бирюзовая волна панели Wave вместо оранжевой точки. -->
+  <rect width="100" height="100" rx="22" fill="#151a23" />
   <path
     d="M24 33L46 50L24 67"
     fill="none"
     stroke="#f5f6f8"
-    stroke-width="6.5"
+    stroke-width="7"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <circle cx="67" cy="66" r="12" fill="#ff8a00" />
+  <path
+    d="M52 66c4.7-7 9.3-7 14 0s9.3 7 14 0"
+    fill="none"
+    stroke="#3cc9db"
+    stroke-width="7"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>
 
 <style>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Wave Shell: значок приложения (вариант 1 «Стрелка и волна»). Плитка 824×824 по сетке значков macOS,
+       рисунок — в координатах 100×100, как в ui/src/lib/components/Logo.svelte.
+       Пересобрать картинки: pnpm tauri icon src-tauri/icons/app-icon.svg -o <временная папка>,
+       взять оттуда 32x32.png, 128x128.png, 128x128@2x.png, icon.png, icon.icns, icon.ico. -->
+  <g transform="translate(100 100) scale(8.24)">
+    <rect width="100" height="100" rx="22" fill="#151A23"/>
+    <path d="M24 33L46 50L24 67" fill="none" stroke="#F5F6F8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M52 66c4.7-7 9.3-7 14 0s9.3 7 14 0" fill="none" stroke="#3CC9DB" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
