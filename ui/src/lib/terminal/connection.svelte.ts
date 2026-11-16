@@ -97,7 +97,7 @@ export class Connection {
   #sentSize = '';
   #resizeTimer: ReturnType<typeof setTimeout> | undefined;
   #input: Uint8Array[] = [];
-  #raf = 0;
+  #inputQueued = false;
   #ackDue = 0;
   #ackQueued = false;
   #closed = false;
@@ -308,9 +308,12 @@ export class Connection {
   write(bytes: Uint8Array): void {
     if (this.phase !== 'connected' || !this.#id || pausedTerminals.has(this.#id)) return;
     this.#input.push(bytes);
-    if (this.#raf) return;
-    this.#raf = requestAnimationFrame(() => {
-      this.#raf = 0;
+    if (this.#inputQueued) return;
+    // Wave: sent in the same task (a microtask merges what one event produced) — waiting for the next
+    // animation frame added 0–16 ms to every keystroke, more when WebKit runs frames late.
+    this.#inputQueued = true;
+    queueMicrotask(() => {
+      this.#inputQueued = false;
       const chunks = this.#input;
       this.#input = [];
       if (this.#id && chunks.length) void api.shellWrite(this.#id, concat(chunks));
@@ -378,7 +381,6 @@ export class Connection {
     this.#generation++;
     this.log.dispose();
     clearTimeout(this.#resizeTimer);
-    if (this.#raf) cancelAnimationFrame(this.#raf);
     if (this.#id && !releasedTabs.delete(this.#tab.id)) void api.sessionClose(this.#id);
     this.#id = null;
   }

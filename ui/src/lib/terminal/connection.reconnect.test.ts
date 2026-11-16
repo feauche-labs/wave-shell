@@ -5,7 +5,10 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-const calls = vi.hoisted(() => ({ onEvent: null as null | ((e: unknown) => void) }));
+const calls = vi.hoisted(() => ({
+  onEvent: null as null | ((e: unknown) => void),
+  writes: [] as Uint8Array[]
+}));
 
 vi.mock('$lib/api', () => {
   const ok = <T>(data: T) => Promise.resolve({ status: 'ok' as const, data });
@@ -21,6 +24,10 @@ vi.mock('$lib/api', () => {
         ) => {
           calls.onEvent = (e) => ev.onmessage(e);
           return ok('s-1');
+        },
+        shellWrite: (_id: string, data: Uint8Array) => {
+          calls.writes.push(data);
+          return ok(null);
         },
         sessionReconnect: () =>
           Promise.resolve({
@@ -47,6 +54,24 @@ describe('manual reconnect', () => {
     await c.reconnect();
     expect(c.phase).toBe('disconnected');
     expect(c.canReconnect).toBe(true);
+    c.close();
+  });
+
+  // Wave: keystrokes went out on the next animation frame (0–16 ms later, more when WebKit is late).
+  it('sends a keystroke at once, merging what one event produced', async () => {
+    const { Connection } = await import('./connection.svelte');
+    const c = new Connection(
+      { id: 't-2', hostId: 'h-1', label: 'srv' } as never,
+      () => {},
+      () => {}
+    );
+    await c.open(80, 24);
+    calls.onEvent?.({ type: 'Connected', server_banner: null });
+    calls.writes.length = 0;
+    c.write(new Uint8Array([0x61]));
+    c.write(new Uint8Array([0x62]));
+    await Promise.resolve();
+    expect(calls.writes.map((w) => [...w])).toEqual([[0x61, 0x62]]);
     c.close();
   });
 });
