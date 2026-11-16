@@ -54,4 +54,24 @@ describe('Highlighter', () => {
     const h = new Highlighter();
     expect(h.feed('\x1b[>4;2mPermission denied')).toBe('\x1b[>4;2mPermission ' + C(31, 'denied'));
   });
+  // Wave: bash 5.1+ (Ubuntu 22.04+) shows a paste reversed — `ESC[7m`…`ESC[27m` — and never sends a
+  // full reset after it. Only a full reset counted as «plain again», so colouring stopped until some
+  // program (ls) happened to send one.
+  it('colours again once a pasted (reversed) line is turned back to normal', () => {
+    const h = new Highlighter();
+    h.feed('root@nl-2:~# \x1b[?2004h\x1b[7mcat > /etc/x.nft\x1b[27m\r\n\x1b[?2004l\r');
+    expect(h.feed('root@nl-2:~# ')).toBe('\x1b[1;32mroot@nl-2\x1b[22;39m:\x1b[1;34m~\x1b[22;39m# ');
+  });
+
+  it('tracks colour per attribute, not only a full reset', () => {
+    const h = new Highlighter();
+    // Own colour → left alone; colour off (39) with bold still on → plain colours again.
+    expect(h.feed('\x1b[1;31mfailed\x1b[39m ok')).toBe(`\x1b[1;31mfailed\x1b[39m ${C(32, 'ok')}`);
+    // A background, a 256-colour and a truecolour foreground each count as «coloured».
+    expect(h.feed('\x1b[44m ok \x1b[49m')).toBe('\x1b[44m ok \x1b[49m');
+    expect(h.feed('\x1b[38;5;196mok\x1b[39m')).toBe('\x1b[38;5;196mok\x1b[39m');
+    expect(h.feed('\x1b[38:2::1:2:3mok\x1b[m')).toBe('\x1b[38:2::1:2:3mok\x1b[m');
+    // `38;5;1` — the trailing 1 is the colour index, not bold; 39 after it is still plain.
+    expect(h.feed('\x1b[38;5;1;39mok')).toBe(`\x1b[38;5;1;39m${C(32, 'ok')}`);
+  });
 });

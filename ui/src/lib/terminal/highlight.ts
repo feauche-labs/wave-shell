@@ -22,9 +22,47 @@ const ALL = new RegExp(RULES.map(([r]) => `(${r.source})`).join('|'), 'gi');
 // eslint-disable-next-line no-control-regex -- matching terminal escape sequences is the point
 const CSI = /^\x1b\[([0-?]*)([ -/]*)([@-~])/;
 
+/** Wave: the colour state an SGR sequence leaves behind — foreground, background, reverse. */
+type Sgr = { fg: boolean; bg: boolean; rev: boolean };
+
+/**
+ * Wave: applies one SGR parameter list to the state. Only what changes the look of colours is
+ * tracked (bold, underline and the like do not); `38;5;n` / `38;2;r;g;b` swallow their arguments, so
+ * the index of a 256-colour is not read as «bold». Sub-parameters (`38:2::1:2:3`) arrive as one item.
+ */
+function applySgr(st: Sgr, params: string): Sgr {
+  const p = params.split(';');
+  const next = { ...st };
+  for (let k = 0; k < p.length; k++) {
+    const [head = ''] = p[k]!.split(':');
+    const n = head === '' ? 0 : Number(head);
+    if (n === 0) {
+      next.fg = false;
+      next.bg = false;
+      next.rev = false;
+    } else if (n === 7) next.rev = true;
+    else if (n === 27) next.rev = false;
+    else if (n === 39) next.fg = false;
+    else if (n === 49) next.bg = false;
+    else if ((n >= 30 && n <= 37) || (n >= 90 && n <= 97)) next.fg = true;
+    else if ((n >= 40 && n <= 47) || (n >= 100 && n <= 107)) next.bg = true;
+    else if (n === 38 || n === 48) {
+      if (n === 38) next.fg = true;
+      else next.bg = true;
+      // Arguments in the same item (colons) or the following ones (semicolons).
+      if (!p[k]!.includes(':')) k += p[k + 1] === '5' ? 2 : p[k + 1] === '2' ? 4 : 0;
+    }
+  }
+  return next;
+}
+
 export class Highlighter {
-  /** Default foreground in effect (we only colour text the program did not colour). */
-  #plain = true;
+  /** Wave: colours the program set (we only colour text it left in default colours). */
+  #sgr: Sgr = { fg: false, bg: false, rev: false };
+  /** Default colours in effect. */
+  get #plain(): boolean {
+    return !this.#sgr.fg && !this.#sgr.bg && !this.#sgr.rev;
+  }
   /** Alternate screen (full-screen app) active. */
   #alt = false;
   /** Incomplete escape sequence from the previous chunk. */
@@ -61,7 +99,7 @@ export class Highlighter {
       const [all, params = '', , final] = m;
       // Wave: a leading < = > ? is a private mode (key reporting etc.), not a colour change.
       if (final === 'm' && !/^[<=>?]/.test(params)) {
-        this.#plain = /^[0;]*$/.test(params) || params === '39' || /(^|;)0;?39?$/.test(params);
+        this.#sgr = applySgr(this.#sgr, params);
       } else if ((final === 'h' || final === 'l') && /^\?(1049|1047|47)$/.test(params)) {
         this.#alt = final === 'h';
       }
