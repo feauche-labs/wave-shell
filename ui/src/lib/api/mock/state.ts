@@ -187,6 +187,37 @@ function seed() {
       updated_at: t
     }
   ];
+  // Wave: `?seed=wave` adds snippet folders like a real library (showcases of the Snippets page and panel).
+  const waveSeed = typeof location !== 'undefined' && location.search.includes('seed=wave');
+  const waveOf: Record<string, string> = {};
+  if (waveSeed) {
+    const add = (name: string, body: string, group: string | null) => {
+      const id = uuid();
+      snippets.push({
+        id,
+        folder_id: null,
+        name,
+        body,
+        sort_key: 'b' + snippets.length,
+        created_at: t,
+        updated_at: t
+      });
+      if (group) waveOf[id] = group;
+    };
+    add('multitest', 'curl -sL https://example.com/multitest.sh | bash', 'g-test');
+    add('Проверка IP', 'curl -s ipinfo.io', 'g-test');
+    add('Логи ноды', 'docker logs -f remnanode', 'g-rw');
+    add(
+      'Обновить ноду',
+      'cd /opt/remnanode && docker compose pull && docker compose up -d',
+      'g-rw'
+    );
+    add('Запустить docker', 'docker compose up -d && docker compose logs -f -t', 'g-dc');
+    add('Перезапустить docker', 'docker compose down && docker compose up -d', 'g-dc');
+    add('Остановить docker', 'docker compose down', 'g-dc');
+    add('remnanode-installer', 'bash <(curl -sL https://example.com/install.sh)', null);
+    add('Проверить скорость', 'wget -O /dev/null http://speedtest.example.net/1GB.zip', null);
+  }
   const knownHosts: KnownHostSummary[] = [
     {
       id: uuid(),
@@ -215,7 +246,25 @@ function seed() {
     knownHosts,
     settings: new Map<string, Value>([
       ['theme', 'dark'],
-      ['locale', 'en']
+      ['locale', 'en'],
+      ...(waveSeed
+        ? ([
+            [
+              'snippets.layout',
+              {
+                groups: [
+                  { id: 'g-test', name: 'Тест серверов' },
+                  { id: 'g-rw', name: 'Remnawave' },
+                  { id: 'g-dc', name: 'Docker Compose' },
+                  { id: 'g-use', name: 'Полезные' }
+                ],
+                of: waveOf,
+                order: [],
+                uses: {}
+              }
+            ]
+          ] as [string, Value][])
+        : [])
     ])
   };
 }

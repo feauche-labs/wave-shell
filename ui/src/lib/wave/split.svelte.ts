@@ -26,6 +26,8 @@ export interface Workspace {
   root: LayoutNode;
   /** A pane shown on the whole stage for a while. */
   max: string | null;
+  /** «Ввод во все окна»: keystrokes typed in any pane go to every pane of the workspace. */
+  broadcast: boolean;
 }
 
 export interface DragState {
@@ -35,6 +37,8 @@ export interface DragState {
   x: number;
   y: number;
   over: { group: string; side: Side } | null;
+  /** A pane dragged by its header is over the tab bar: dropping returns it to a tab. */
+  toBar?: boolean;
 }
 
 const FULL: Box = { x: 0, y: 0, w: 1, h: 1 };
@@ -42,8 +46,12 @@ const FULL: Box = { x: 0, y: 0, w: 1, h: 1 };
 class WaveSplit {
   spaces = $state.raw<Workspace[]>([]);
   drag = $state.raw<DragState | null>(null);
+  /** A splitter is being dragged: panes follow the pointer without easing. */
+  resizing = $state(false);
   /** The terminal stage (SplitOverlay) — pane boxes are fractions of it. */
   stage: HTMLElement | null = null;
+  /** The tab bar (TabBar) — a pane dropped on it gets its own tab back. */
+  bar: HTMLElement | null = null;
   #next = 1;
 
   spaceOf(key: string | null | undefined): Workspace | undefined {
@@ -122,12 +130,76 @@ class WaveSplit {
     if (this.count(key) > 1 || this.together(target, key)) return false;
     let s = this.spaceOf(target);
     if (!s) {
-      s = { id: this.#next++, anchor: target, root: { kind: 'pane', group: target }, max: null };
+      s = {
+        id: this.#next++,
+        anchor: target,
+        root: { kind: 'pane', group: target },
+        max: null,
+        broadcast: false
+      };
       this.spaces = [...this.spaces, s];
     }
     this.#update(s.id, (x) => ({ ...x, root: insert(x.root, target, key, side), max: null }));
     this.focus(key);
     return true;
+  }
+
+  /** Moves pane `key` of a workspace next to pane `target` of the same workspace. */
+  move(key: string, target: string, side: Side): boolean {
+    const s = this.spaceOf(key);
+    if (!s || key === target || !this.together(key, target)) return false;
+    this.#update(s.id, (x) => {
+      const rest = remove(x.root, key);
+      return rest ? { ...x, root: insert(rest, target, key, side), max: null } : x;
+    });
+    this.focus(key);
+    return true;
+  }
+
+  broadcasting(key: string): boolean {
+    return !!this.spaceOf(key)?.broadcast;
+  }
+
+  toggleBroadcast(key: string): void {
+    const s = this.spaceOf(key);
+    if (s) this.#update(s.id, (x) => ({ ...x, broadcast: !x.broadcast }));
+  }
+
+  /** Drags a pane by its header: over another pane — moves it there; over the tab bar — back to a tab. */
+  grab(e: PointerEvent, key: string, label: string, flag: string | null): void {
+    if (e.button !== 0 || (e.target as Element).closest('button')) return;
+    const id = e.pointerId;
+    const [x0, y0] = [e.clientX, e.clientY];
+    let moving = false;
+    const move = (ev: PointerEvent) => {
+      if (ev.pointerId !== id) return;
+      if (!moving && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 5) return;
+      moving = true;
+      ev.preventDefault();
+      const r = this.bar?.getBoundingClientRect();
+      const toBar =
+        !!r &&
+        ev.clientX >= r.left &&
+        ev.clientX <= r.right &&
+        ev.clientY >= r.top &&
+        ev.clientY <= r.bottom;
+      const over = toBar ? null : this.#hit(ev.clientX, ev.clientY, key);
+      this.drag = { key, label, flag, x: ev.clientX, y: ev.clientY, over, toBar };
+    };
+    const end = (ev: PointerEvent) => {
+      if (ev.pointerId !== id) return;
+      window.removeEventListener('pointermove', move, true);
+      window.removeEventListener('pointerup', end, true);
+      window.removeEventListener('pointercancel', end, true);
+      const d = this.drag;
+      this.drag = null;
+      if (!moving || !d || ev.type === 'pointercancel') return;
+      if (d.toBar) this.detach(key);
+      else if (d.over) this.move(key, d.over.group, d.over.side);
+    };
+    window.addEventListener('pointermove', move, true);
+    window.addEventListener('pointerup', end, true);
+    window.addEventListener('pointercancel', end, true);
   }
 
   /** Tab bar callback on drop outside the bar: split if the pointer was over a pane. */

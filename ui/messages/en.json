@@ -917,5 +917,16 @@
   "wave_net_conns_out": "outbound: {count}",
   "wave_net_note": "Per-address rates come from TCP connections (Xray, web); UDP shows only in the interface totals.",
   "wave_net_route": "To the internet: {src} via {dev}",
-  "wave_net_loading": "Reading addresses…"
+  "wave_net_loading": "Reading addresses…",
+  "wave_split_broadcast": "Broadcast input",
+  "wave_split_broadcast_on": "Broadcast input is on: what you type goes to every pane of the workspace. Click to turn it off.",
+  "wave_split_broadcast_off": "Turn on broadcast input: what you type will go to every pane of the workspace",
+  "wave_split_to_tab": "Release to return to a tab",
+  "wave_split_move": "Release to move the pane here",
+  "wave_split_grab": "Drag the header to move the pane or return it to a tab",
+  "wave_snip_folders": "Folders",
+  "wave_snip_loose": "Snippets",
+  "wave_snip_nofolder": "No folder",
+  "wave_snip_all": "All snippets",
+  "wave_snip_found": "Found"
 }

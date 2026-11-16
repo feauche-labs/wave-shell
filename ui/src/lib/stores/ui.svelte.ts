@@ -23,6 +23,8 @@ class UiState {
   constructor() {
     try {
       this.inspectorOpen = localStorage.getItem('ibc.ui.inspectorOpen') === 'true';
+      // Wave: the left menu stays the way it was left (see wave/sidebar-peek).
+      this.sidebarOpen = localStorage.getItem('wave.ui.sidebarOpen') !== 'false';
       if (localStorage.getItem('ibc.ui.panelTab') === 'snippets') this.panelTab = 'snippets';
     } catch {
       /* storage unavailable */

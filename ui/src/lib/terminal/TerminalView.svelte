@@ -2,7 +2,8 @@
   import { onMount, tick } from 'svelte';
   import { api } from '$lib/api';
   import * as m from '$lib/paraglide/messages.js';
-  import { sessions, type Tab } from '$lib/stores/sessions.svelte';
+  import { groupKey, sessions, type Tab } from '$lib/stores/sessions.svelte';
+  import { fanOut as waveFanOut, registerWriter } from '$lib/wave/broadcast';
   import { connectAnother } from '$lib/stores/actions';
   import { tree } from '$lib/stores/tree.svelte';
   import { isApple, shortcutKey } from '$lib/util/platform';
@@ -146,12 +147,16 @@
     if (!isApple && e.ctrlKey && !e.shiftKey && !e.altKey && !app) e.stopPropagation();
   }
 
+  // Wave: other panes of a workspace with «Ввод во все окна» on write here too.
+  $effect(() => registerWriter(tab.id, (b) => conn.write(b)));
+
   function onInput(data: string) {
     if (conn.phase === 'disconnected') {
       if (data === '\r') void conn.reconnect();
       return;
     }
     conn.write(utf8(data));
+    waveFanOut(groupKey(tab), utf8(data));
   }
 
   function closeTab() {
@@ -213,7 +218,10 @@
       engine = eng;
       eng.term.attachCustomKeyEventHandler(onKey);
       eng.term.onData(onInput);
-      eng.term.onBinary((s) => conn.write(binaryBytes(s)));
+      eng.term.onBinary((s) => {
+        conn.write(binaryBytes(s));
+        waveFanOut(groupKey(tab), binaryBytes(s));
+      });
       eng.term.onResize(({ cols, rows }) => conn.resize(cols, rows));
       eng.term.onSelectionChange(() => (hasSelection = eng.term.hasSelection()));
       eng.term.onTitleChange((t) => (title = sanitizeTitle(t)));

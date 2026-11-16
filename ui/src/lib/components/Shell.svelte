@@ -26,6 +26,7 @@
   import { waveUpdate } from '$lib/wave/update.svelte';
   import { waveKeys } from '$lib/wave/keys.svelte';
   import { waveTags } from '$lib/wave/tags.svelte';
+  import { wavePeek } from '$lib/wave/sidebar-peek.svelte';
   import Sidebar from './Sidebar.svelte';
   import TabBar from './TabBar.svelte';
   import Toasts from './Toasts.svelte';
@@ -135,12 +136,24 @@
   }
 
   // Sidebar resize: pointer drag on the 4 px handle, 200–420 px.
+  // Wave: remember the menu opened / hidden with the button; a pinned menu ends the peek.
+  let resizing = $state(false);
+  $effect(() => {
+    const open = ui.sidebarOpen;
+    untrack(() => {
+      if (!narrow && !isHostWindow) wavePeek.save(open);
+      if (open) wavePeek.close();
+    });
+  });
+
   function startResize(e: PointerEvent) {
     e.preventDefault();
+    resizing = true;
     const move = (ev: PointerEvent) => (ui.sidebarWidth = Math.min(420, Math.max(200, ev.clientX)));
     const up = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      resizing = false;
       settings.saveSidebarWidth();
     };
     window.addEventListener('pointermove', move);
@@ -159,17 +172,22 @@
 <div
   class="shell"
   class:narrow={narrow || isHostWindow}
+  class:resizing
   style:--sw="{!isHostWindow && ui.sidebarOpen && !narrow ? ui.sidebarWidth : 0}px"
 >
   {#if !isHostWindow}
+    <!-- svelte-ignore a11y_no_static_element_interactions (Wave: hover keeps the peeked menu open) -->
     <div
       class="sidebar"
       class:open={ui.sidebarOpen}
-      inert={!ui.sidebarOpen}
+      class:peek={wavePeek.open && !ui.sidebarOpen && !narrow}
+      inert={!ui.sidebarOpen && !wavePeek.open}
       style:width="{ui.sidebarWidth}px"
+      onpointerenter={() => wavePeek.stay()}
+      onpointerleave={() => wavePeek.leave()}
     >
       <Sidebar {mac} />
-      {#if !narrow}
+      {#if !narrow && ui.sidebarOpen}
         <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
         <div
           class="grip"
@@ -185,6 +203,15 @@
         ></div>
       {/if}
     </div>
+    {#if !narrow && !ui.sidebarOpen}
+      <!-- Wave: the left edge of the window — the hidden menu slides out (like Arc). -->
+      <div
+        class="wave-edge"
+        aria-hidden="true"
+        onpointerenter={(e) => wavePeek.edge(e)}
+        onpointermove={(e) => wavePeek.edge(e)}
+      ></div>
+    {/if}
     {#if narrow && ui.sidebarOpen}
       <button class="scrim" aria-label={m.action_close()} onclick={() => (ui.sidebarOpen = false)}
       ></button>
@@ -227,6 +254,50 @@
   }
   .sidebar.open {
     visibility: visible;
+  }
+  /* Wave: the menu slides in and out; hidden, it waits off-screen and slides over the content (like Arc). */
+  .shell:not(.narrow) {
+    transition: grid-template-columns 200ms var(--ease);
+  }
+  .shell.resizing {
+    transition: none;
+  }
+  .shell:not(.narrow) .sidebar {
+    transition: transform 200ms var(--ease);
+  }
+  .shell:not(.narrow) .main {
+    grid-column: 2;
+  }
+  .shell:not(.narrow) .sidebar:not(.open) {
+    position: absolute;
+    z-index: 45;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(calc(-100% - 16px));
+    transition:
+      transform 200ms var(--ease),
+      visibility 0s linear 200ms;
+  }
+  /* Over a terminal the glass needs more body and a real shadow. */
+  .shell:not(.narrow) .sidebar:not(.open) :global(.side) {
+    background: color-mix(in oklab, var(--sidebar) 55%, var(--bg));
+    box-shadow:
+      0 0 0 0.5px var(--sidebar-edge),
+      0 18px 48px -12px rgb(0 0 0 / 0.45);
+  }
+  .shell:not(.narrow) .sidebar.peek {
+    visibility: visible;
+    transform: none;
+    transition: transform 200ms var(--ease);
+  }
+  .wave-edge {
+    position: absolute;
+    z-index: 44;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 6px;
   }
   .grip {
     position: absolute;

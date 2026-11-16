@@ -12,6 +12,7 @@
   import { snippets } from '$lib/snippets/snippets.svelte';
   import { sessions } from '$lib/stores/sessions.svelte';
   import { ui } from '$lib/stores/ui.svelte';
+  import { waveSide } from '$lib/wave/motion';
 
   const tab = $derived(sessions.active);
   const group = $derived(sessions.groups.find((g) => g.key === sessions.activeGroup));
@@ -39,7 +40,8 @@
     {/if}
   </div>
   {#if tab?.kind === 'terminal' && !tab.local && group && ui.inspectorOpen}
-    <SidePanel {group} />
+    <!-- Wave: the panel slides in and out -->
+    <div class="wave-side" transition:waveSide><SidePanel {group} /></div>
   {/if}
 </div>
 
@@ -52,6 +54,11 @@
 <FolderDialog />
 
 <style>
+  .wave-side {
+    display: flex;
+    flex: none;
+    min-height: 0;
+  }
   .stage {
     position: relative;
     flex: 1;

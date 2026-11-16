@@ -51,7 +51,7 @@
     border-radius: var(--r-sheet);
     background: var(--bg);
     box-shadow: var(--shadow);
-    animation: slide 420ms var(--spring);
+    animation: slide 240ms var(--ease); /* Wave: quick but smooth (was 420 ms spring) */
   }
   @keyframes slide {
     from {

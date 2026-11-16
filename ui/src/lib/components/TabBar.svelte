@@ -33,6 +33,10 @@
   const hidden = $derived(sessions.groups.length - sessions.visibleGroups.length);
 
   let tabsEl: HTMLDivElement;
+  // Wave: a pane dragged by its header onto the bar returns to its own tab.
+  $effect(() => {
+    waveSplit.bar = tabsEl;
+  });
   const drag = new TabDrag(
     () => [...tabsEl.querySelectorAll<HTMLElement>('[data-tab-key]')],
     (key, to) => sessions.moveGroup(key, to),
@@ -109,6 +113,7 @@
     class="tabs"
     class:dragging={drag.key !== null}
     class:settling={drag.settling}
+    class:wave-to-bar={!!waveSplit.drag?.toBar}
     role="tablist"
     aria-label={m.tabs_label()}
     data-tauri-drag-region
@@ -293,6 +298,11 @@
     .seg .lbl {
       display: none;
     }
+  }
+  .tabs.wave-to-bar {
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--accent) 16%, transparent);
+    box-shadow: inset 0 0 0 1.5px var(--accent);
   }
   .tabs {
     display: flex;

@@ -41,6 +41,7 @@
     e.preventDefault();
     const el = e.currentTarget as HTMLElement;
     el.setPointerCapture(e.pointerId);
+    split.resizing = true;
     const r = stage.getBoundingClientRect();
     const move = (ev: PointerEvent) => {
       const ratio =
@@ -50,6 +51,7 @@
       split.setRatio(s.path, ratio);
     };
     const up = () => {
+      split.resizing = false;
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
@@ -82,7 +84,11 @@
       style:width="calc({pct(preview.w)} - 6px)"
       style:height="calc({pct(preview.h)} - 6px)"
     >
-      <span>{m.wave_split_drop()}</span>
+      <span
+        >{split.drag && split.together(split.drag.key, split.drag.over?.group ?? null)
+          ? m.wave_split_move()
+          : m.wave_split_drop()}</span
+      >
     </div>
   {/if}
 </div>
@@ -91,6 +97,7 @@
   <div class="ghost" style:left="{split.drag.x + 14}px" style:top="{split.drag.y + 10}px">
     <Flag code={split.drag.flag} size={13} />
     <span>{split.drag.label}</span>
+    {#if split.drag.toBar}<small>· {m.wave_split_to_tab()}</small>{/if}
   </div>
 {/if}
 
@@ -160,7 +167,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    max-width: 220px;
+    max-width: 380px;
     padding: 5px 10px;
     border: 0.5px solid var(--border);
     border-radius: 8px;
@@ -172,6 +179,10 @@
     opacity: 0.85;
     pointer-events: none;
     white-space: nowrap;
+  }
+  .ghost small {
+    color: var(--accent);
+    font-size: 11.5px;
   }
   .ghost span {
     overflow: hidden;
