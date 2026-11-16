@@ -93,31 +93,37 @@
     <ContextMenu.SubTrigger class="menu-item">
       <span class="grow">{m.menu_set_flag()}</span><ChevronRight size={14} />
     </ContextMenu.SubTrigger>
-    <ContextMenu.SubContent class="menu" sideOffset={4}>
-      {@render item(m.flag_none(), () => flag(null))}
-      {#each settings.recentFlags as code (code)}
-        <ContextMenu.Item class="menu-item" onSelect={() => flag(code)}>
-          <Flag {code} size={14} /><span>{code.toUpperCase()}</span>
-        </ContextMenu.Item>
-      {/each}
-      {#if only}{@render item(m.menu_more(), edit)}{/if}
-    </ContextMenu.SubContent>
+    <!-- Wave: in a portal — inside the menu (overflow + backdrop-filter) the submenu was clipped away. -->
+    <ContextMenu.Portal>
+      <ContextMenu.SubContent class="menu" sideOffset={4}>
+        {@render item(m.flag_none(), () => flag(null))}
+        {#each settings.recentFlags as code (code)}
+          <ContextMenu.Item class="menu-item" onSelect={() => flag(code)}>
+            <Flag {code} size={14} /><span>{code.toUpperCase()}</span>
+          </ContextMenu.Item>
+        {/each}
+        {#if only}{@render item(m.menu_more(), edit)}{/if}
+      </ContextMenu.SubContent>
+    </ContextMenu.Portal>
   </ContextMenu.Sub>
 
   <ContextMenu.Sub>
     <ContextMenu.SubTrigger class="menu-item">
       <span class="grow">{m.menu_move_to()}</span><ChevronRight size={14} />
     </ContextMenu.SubTrigger>
-    <ContextMenu.SubContent class="menu" sideOffset={4}>
-      {@render item(m.menu_top_level(), () => moveTo(null))}
-      {#each targets as t (t.id)}
-        <ContextMenu.Item
-          class="menu-item"
-          style="padding-left: {8 + t.depth * 12}px"
-          onSelect={() => moveTo(t.id)}>{t.label}</ContextMenu.Item
-        >
-      {/each}
-    </ContextMenu.SubContent>
+    <!-- Wave: in a portal — inside the menu (overflow + backdrop-filter) the submenu was clipped away. -->
+    <ContextMenu.Portal>
+      <ContextMenu.SubContent class="menu" sideOffset={4}>
+        {@render item(m.menu_top_level(), () => moveTo(null))}
+        {#each targets as t (t.id)}
+          <ContextMenu.Item
+            class="menu-item"
+            style="padding-left: {8 + t.depth * 12}px"
+            onSelect={() => moveTo(t.id)}>{t.label}</ContextMenu.Item
+          >
+        {/each}
+      </ContextMenu.SubContent>
+    </ContextMenu.Portal>
   </ContextMenu.Sub>
 
   <div class="menu-sep"></div>
