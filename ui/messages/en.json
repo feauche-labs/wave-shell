@@ -901,5 +901,13 @@
   "wave_host_key_pick": "Choose a key",
   "wave_host_key_none": "The Keys section is empty — add a key there.",
   "wave_host_key_open": "Open Keys",
-  "wave_host_key_file": "Add from a file…"
+  "wave_host_key_file": "Add from a file…",
+  "wave_split_workspace": "Workspace",
+  "wave_split_return": "Back to its own tab",
+  "wave_split_max": "Fill the workspace",
+  "wave_split_restore": "Restore the layout",
+  "wave_split_close": "Disconnect",
+  "wave_split_dissolve": "Split the workspace into tabs",
+  "wave_split_drop": "Release to split the screen",
+  "wave_split_resize": "Drag to resize"
 }

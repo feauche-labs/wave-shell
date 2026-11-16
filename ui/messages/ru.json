@@ -901,5 +901,13 @@
   "wave_host_key_pick": "Выберите ключ",
   "wave_host_key_none": "В разделе «Ключи» пока пусто — добавьте ключ там.",
   "wave_host_key_open": "Открыть «Ключи»",
-  "wave_host_key_file": "Добавить из файла…"
+  "wave_host_key_file": "Добавить из файла…",
+  "wave_split_workspace": "Рабочая область",
+  "wave_split_return": "Вернуть во вкладку",
+  "wave_split_max": "Развернуть на всю область",
+  "wave_split_restore": "Вернуть раскладку",
+  "wave_split_close": "Отключить",
+  "wave_split_dissolve": "Разъединить рабочую область",
+  "wave_split_drop": "Отпустите — экран разделится",
+  "wave_split_resize": "Потяните, чтобы изменить размер"
 }

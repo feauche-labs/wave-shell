@@ -5,6 +5,7 @@
     FolderOpen,
     Gauge,
     LayoutGrid,
+    LayoutPanelLeft,
     PanelLeftClose,
     PanelLeftOpen,
     PanelRight,
@@ -22,6 +23,7 @@
   import { isHostWindow } from './host-window';
   import TabMenu from './TabMenu.svelte';
   import { TabDrag } from './tab-drag.svelte';
+  import { waveSplit } from '$lib/wave/split.svelte';
 
   let { mac = false, windowControls = false }: { mac?: boolean; windowControls?: boolean } =
     $props();
@@ -36,8 +38,9 @@
     (key, to) => sessions.moveGroup(key, to),
     () => tabsEl.getBoundingClientRect(),
     // Wave: no separate window by dragging a tab out of the bar — it happened by accident. A tab dropped
-    // outside just goes back; «Open in a separate window» stays in the tab menu.
-    () => false
+    // over a terminal splits the screen (wave/split); dropped anywhere else it just goes back.
+    // «Open in a separate window» stays in the tab menu.
+    (key) => waveSplit.drop(key)
   );
 
   function onKey(e: KeyboardEvent, i: number) {
@@ -111,14 +114,18 @@
     data-tauri-drag-region
     bind:this={tabsEl}
   >
-    {#each sessions.visibleGroups as g, i (g.key)}
-      {@const on = g.key === sessions.activeGroup}
+    <!-- Wave: workspace members other than its first server hide behind the workspace tab. -->
+    {#each sessions.visibleGroups.filter((x) => !waveSplit.hidden(x.key)) as g, i (g.key)}
+      {@const on =
+        g.key === sessions.activeGroup || waveSplit.together(g.key, sessions.activeGroup)}
+      {@const space = waveSplit.isAnchor(g.key)}
       <TabMenu group={g}>
         {#snippet children(props)}
           <div
             {...!isHostWindow ? props : {}}
             class="tab"
             class:active={on}
+            class:wave-space={space}
             class:lifted={drag.key === g.key}
             role="presentation"
             data-tab-key={g.key}
@@ -131,7 +138,11 @@
               role="tab"
               aria-selected={on}
               tabindex={on ? 0 : -1}
-              onpointerdown={(e) => !isHostWindow && drag.down(e, g.key)}
+              onpointerdown={(e) => {
+                if (isHostWindow) return;
+                drag.down(e, g.key);
+                waveSplit.track(e, g.key, g.label, g.flag, () => tabsEl.getBoundingClientRect());
+              }}
               onclick={(e) => {
                 if (drag.swallowClick()) e.preventDefault();
                 else sessions.select(g.current.id);
@@ -139,8 +150,13 @@
               onkeydown={(e) => onKey(e, i)}
             >
               <span class="dot" data-phase={sessions.groupPhase(g)}></span>
-              <Flag code={g.flag} size={14} />
-              <span class="name">{g.label}</span>
+              {#if space}
+                <LayoutPanelLeft size={14} />
+                <span class="name">{m.wave_split_workspace()} · {waveSplit.count(g.key)}</span>
+              {:else}
+                <Flag code={g.flag} size={14} />
+                <span class="name">{g.label}</span>
+              {/if}
               {#if !on && sessions.groupActivity(g)}
                 <span class="unseen" title={m.tab_unseen()}></span>
               {/if}
@@ -148,9 +164,10 @@
             {#if !isHostWindow}
               <button
                 class="close"
-                aria-label={m.tab_disconnect()}
-                title={m.tab_disconnect()}
-                onclick={() => closeServer(g.key)}><X size={12} /></button
+                aria-label={space ? m.wave_split_dissolve() : m.tab_disconnect()}
+                title={space ? m.wave_split_dissolve() : m.tab_disconnect()}
+                onclick={() => (space ? waveSplit.dissolve(g.key) : closeServer(g.key))}
+                ><X size={12} /></button
               >
             {/if}
           </div>
@@ -300,6 +317,10 @@
     transition:
       background-color 120ms var(--ease),
       color 120ms var(--ease);
+  }
+  /* Wave: the workspace tab («Рабочая область · N») needs a little more room. */
+  .tab.wave-space {
+    max-width: 280px;
   }
   .tab:hover {
     background: var(--hover);
