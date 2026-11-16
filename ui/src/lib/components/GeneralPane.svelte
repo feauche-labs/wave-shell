@@ -3,6 +3,8 @@
   import { ACCENTS, settings, type ThemeChoice } from '$lib/stores/settings.svelte';
   import { ui } from '$lib/stores/ui.svelte';
   import { waveUpdate } from '$lib/wave/update.svelte';
+  import { SCALES, uiScale } from '$lib/wave/ui-scale.svelte';
+  import { isApple } from '$lib/util/platform';
 
   /** Settings → General: appearance and app behaviour. */
   const themes: { id: ThemeChoice; label: () => string }[] = [
@@ -41,6 +43,18 @@
       >
     </div>
   </div>
+  <!-- Wave: interface scale (showcase 16.11.2026, variant A — steps). -->
+  <div class="fld">
+    <span class="lbl">{m.wave_ui_scale()}</span>
+    <div class="seg" role="group" aria-label={m.wave_ui_scale()}>
+      {#each SCALES as z (z)}
+        <button type="button" aria-pressed={uiScale.value === z} onclick={() => uiScale.set(z)}
+          >{Math.round(z * 100)} %</button
+        >
+      {/each}
+    </div>
+  </div>
+  <p class="note">{isApple ? m.wave_ui_scale_note_mac() : m.wave_ui_scale_note()}</p>
   <div class="fld">
     <span class="lbl">{m.settings_accent()}</span>
     <div class="swatches" role="radiogroup" aria-label={m.settings_accent()}>

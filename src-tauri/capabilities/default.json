@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Main window: event listening (drag-drop, vault://locked) and window controls and dragging by the toolbar. App commands need no permission; the file dialog is opened by the backend, never by JS. Wave: the update banner checks, downloads and installs a signed update and restarts the app.",
+  "description": "Main window: event listening (drag-drop, vault://locked) and window controls and dragging by the toolbar. App commands need no permission; the file dialog is opened by the backend, never by JS. Wave: the update banner checks, downloads and installs a signed update and restarts the app; the interface scale (Settings → General) zooms the webview.",
   "windows": [
     "main",
     "host-*"
@@ -16,6 +16,7 @@
     "core:window:allow-minimize",
     "core:window:allow-close",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "core:webview:allow-set-webview-zoom"
   ]
 }

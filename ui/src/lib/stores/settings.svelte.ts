@@ -4,6 +4,8 @@ import { getLocale, setLocale } from '$lib/paraglide/runtime.js';
 import { checkForUpdate, UPDATE_CHECK_KEY, type UpdateInfo } from '$lib/util/update';
 import { AUTOLOCK_DEFAULT, AUTOLOCK_KEY, parseAutolock } from '$lib/util/autolock';
 import { ui } from './ui.svelte';
+// Wave: the interface scale applies itself on load (before unlock, like the density).
+import '$lib/wave/ui-scale.svelte';
 
 export type ThemeChoice = 'light' | 'dark' | 'system';
 

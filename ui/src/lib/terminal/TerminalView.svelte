@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { scaleKey } from '$lib/wave/ui-scale.svelte';
   import { onMount, tick } from 'svelte';
   import { api } from '$lib/api';
   import * as m from '$lib/paraglide/messages.js';
@@ -126,6 +127,8 @@
       void pasteFromClipboard();
       return stop();
     }
+    // Wave: ⌘⇧+ / ⌘⇧− / ⌘⇧0 scale the whole window (Shell.svelte), not the terminal font.
+    if (scaleKey(e) !== null) return true;
     if (k === '=' || k === '+') {
       terminalPrefs.zoom(1);
       return stop();

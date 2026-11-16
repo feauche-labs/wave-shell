@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { scaleKey, uiScale } from '$lib/wave/ui-scale.svelte';
   import { isTauri } from '@tauri-apps/api/core';
   import { onMount, untrack, type Snippet } from 'svelte';
   import { api } from '$lib/api';
@@ -97,6 +98,13 @@
     if (e.ctrlKey && e.key === 'Tab') {
       e.preventDefault();
       sessions.step(e.shiftKey ? -1 : 1);
+      return;
+    }
+    // Wave: ⌘⇧+ / ⌘⇧− / ⌘⇧0 — interface scale (the terminal keeps ⌘+ / ⌘− for its font).
+    const z = scaleKey(e);
+    if (z !== null) {
+      e.preventDefault();
+      uiScale.key(z);
       return;
     }
     if (!(isApple ? e.metaKey : e.ctrlKey) || e.altKey) return;

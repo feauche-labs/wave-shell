@@ -943,5 +943,11 @@
   "menu_return_to_main": "Move to main window",
   "tab_drop_new_window": "New window",
   "tab_drop_return_hint": "Drop outside to return it to the tabs",
-  "wave_sftp_tab_closed": "The Files tab of this server was closed — open it and start the transfer again"
+  "wave_sftp_tab_closed": "The Files tab of this server was closed — open it and start the transfer again",
+  "wave_ui_scale": "Scale",
+  "wave_ui_scale_note": "The whole window: sidebar, sheets, buttons and terminal text. The terminal font size alone is under “Terminal”.",
+  "wave_ui_scale_note_mac": "The whole window: sidebar, sheets, buttons and terminal text. Quick: ⌘⇧+ and ⌘⇧−, back with ⌘⇧0. The terminal font alone is still ⌘+ and ⌘−.",
+  "wave_keys_scale_in": "Larger interface",
+  "wave_keys_scale_out": "Smaller interface",
+  "wave_keys_scale_reset": "Default interface scale"
 }

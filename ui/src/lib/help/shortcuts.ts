@@ -41,7 +41,15 @@ export function shortcutGroups(): ShortcutGroup[] {
         { label: m.keys_switch_server(), keys: [...app('1'), '–', '9'] },
         { label: m.keys_next_tab(), keys: ['Ctrl', 'Tab'] },
         { label: m.keys_move_tab(), keys: [isApple ? '⌥' : 'Alt', '←', '→'] },
-        { label: m.keys_local_terminal(), keys: ['Ctrl', '`'] }
+        { label: m.keys_local_terminal(), keys: ['Ctrl', '`'] },
+        // Wave: interface scale — Mac only (see wave/ui-scale.svelte.ts).
+        ...(isApple
+          ? [
+              { label: m.wave_keys_scale_in(), keys: ['⌘', '⇧', '+'] },
+              { label: m.wave_keys_scale_out(), keys: ['⌘', '⇧', '−'] },
+              { label: m.wave_keys_scale_reset(), keys: ['⌘', '⇧', '0'] }
+            ]
+          : [])
       ]
     },
     {
