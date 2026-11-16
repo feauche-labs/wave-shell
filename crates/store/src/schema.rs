@@ -114,6 +114,43 @@ pub(crate) fn migrate(conn: &mut Connection) -> Result<()> {
         )?;
         tx.commit()?;
     }
+    wave_widen_folder_look(conn)
+}
+
+/// Wave: folders keep an icon or emoji in `country_code` (`icon:server-cog`, `emoji:🏠`), but
+/// migration 001 limits the folder column to 2–6 characters (hosts have no such limit), so saving a
+/// folder with a look failed with «CHECK constraint failed». Widens the limit to 64 in place.
+/// Outside the numbered migrations on purpose: the author's future migration 002 must still run.
+/// Only a CHECK is loosened, so the rows on disk stay valid — SQLite documents editing the schema
+/// text for exactly this case (ALTER TABLE, «making other kinds of table schema changes»).
+fn wave_widen_folder_look(conn: &mut Connection) -> Result<()> {
+    const OLD: &str = "length(country_code) BETWEEN 2 AND 6)";
+    const NEW: &str = "length(country_code) BETWEEN 2 AND 64)";
+    let sql: Option<String> = conn
+        .query_row(
+            "SELECT sql FROM sqlite_schema WHERE type='table' AND name='folder'",
+            [],
+            |r| r.get(0),
+        )
+        .ok();
+    let Some(sql) = sql.filter(|s| s.contains(OLD)) else {
+        return Ok(());
+    };
+    let version: i64 = conn.query_row("PRAGMA schema_version", [], |r| r.get(0))?;
+    let tx = conn.transaction()?;
+    tx.pragma_update(None, "writable_schema", true)?;
+    tx.execute(
+        "UPDATE sqlite_schema SET sql=?1 WHERE type='table' AND name='folder'",
+        [sql.replacen(OLD, NEW, 1)],
+    )?;
+    tx.pragma_update(None, "schema_version", version + 1)?;
+    tx.pragma_update(None, "writable_schema", false)?;
+    tx.commit()?;
+    // The connection still holds the old schema in memory; make it re-read.
+    let ok: String = conn.query_row("PRAGMA quick_check", [], |r| r.get(0))?;
+    if ok != "ok" {
+        return Err(StoreError::Db(format!("schema check after widening: {ok}")));
+    }
     Ok(())
 }
 
@@ -133,6 +170,30 @@ mod tests {
         assert_eq!(version(&c), i64::try_from(MIGRATIONS.len()).unwrap());
         migrate(&mut c).unwrap();
         assert_eq!(version(&c), i64::try_from(MIGRATIONS.len()).unwrap());
+    }
+
+    #[test]
+    fn wave_folder_takes_an_icon_or_emoji() {
+        let mut c = Connection::open_in_memory().unwrap();
+        migrate(&mut c).unwrap();
+        let ins = |c: &Connection, code: &str| {
+            c.execute(
+                "INSERT INTO folder(id,name,country_code,sort_key,created_at,updated_at)
+                 VALUES(randomblob(16),'f',?1,'a',0,0)",
+                [code],
+            )
+        };
+        ins(&c, "icon:server-cog").unwrap();
+        ins(&c, "emoji:🏠").unwrap();
+        ins(&c, "de").unwrap();
+        assert!(ins(&c, "x").is_err(), "the lower bound stays");
+        let v = version(&c);
+        migrate(&mut c).unwrap();
+        assert_eq!(
+            version(&c),
+            v,
+            "the widening does not take a migration number"
+        );
     }
 
     #[test]
