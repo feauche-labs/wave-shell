@@ -124,6 +124,13 @@ pub enum TransferEvent {
         /// Details.
         info: ConflictInfo,
     },
+    /// Wave: a conflict prompt is closed — answered, or covered by «apply to all» given in another transfer.
+    ConflictResolved {
+        /// Transfer.
+        id: TransferId,
+        /// The prompt.
+        pending_id: ConflictId,
+    },
     /// One file finished (or skipped).
     FileDone {
         /// Transfer.

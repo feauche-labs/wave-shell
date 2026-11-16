@@ -290,6 +290,7 @@ export const transferConflictReply: Commands['transferConflictReply'] = async (
   const t = id && transfers.get(id);
   if (!t) return notFound();
   conflicts.delete(pendingId);
+  send({ type: 'ConflictResolved', id: t.id, pending_id: pendingId }); // Wave
   t.choice = choice;
   if (applyToAll) {
     for (const [pid, tid] of conflicts) {
@@ -297,6 +298,7 @@ export const transferConflictReply: Commands['transferConflictReply'] = async (
       if (!other) continue;
       other.choice = choice;
       conflicts.delete(pid);
+      send({ type: 'ConflictResolved', id: tid, pending_id: pid }); // Wave
       start(other);
     }
   }

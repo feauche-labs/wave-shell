@@ -115,6 +115,11 @@ class TransfersStore {
         this.#patch(e.id, () => ({ state: 'conflict' }));
         this.conflicts = [...this.conflicts, { id: e.id, pendingId: e.pending_id, info: e.info }];
         break;
+      // Wave: a prompt was answered — here, or by «apply to all» given in another transfer of the selection.
+      case 'ConflictResolved':
+        this.conflicts = this.conflicts.filter((c) => c.pendingId !== e.pending_id);
+        this.#patch(e.id, (t) => (t.state === 'conflict' ? { state: 'running' } : {}));
+        break;
       case 'FileDone':
         if (e.skipped) this.#patch(e.id, () => ({ skipped: true }));
         break;
@@ -161,7 +166,9 @@ class TransfersStore {
     choice: Parameters<typeof api.transferConflictReply>[1],
     all: boolean
   ) {
-    this.conflicts = all ? [] : this.conflicts.filter((x) => x.pendingId !== c.pendingId);
+    // Wave: only this prompt goes at once; the ones «apply to all» answers leave on ConflictResolved
+    // (clearing all of them here left the other transfers waiting for an answer that never came).
+    this.conflicts = this.conflicts.filter((x) => x.pendingId !== c.pendingId);
     await api.transferConflictReply(c.pendingId, choice, all);
   }
 

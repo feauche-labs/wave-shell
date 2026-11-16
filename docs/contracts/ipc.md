@@ -177,7 +177,7 @@ pub enum ApiError {
 
 `Endpoint = {kind:"local"} | {kind:"remote", sftp_id}`. `ConflictPolicy = "Ask"|"Overwrite"|"Skip"|"Rename"|"ResumeIfSmaller"`, `ConflictChoice = "Overwrite"|"Skip"|"Rename"|"Resume"`.
 `TransferEvent` (tag `type`): `Queued{id, src_path, dst_path}`, `Started{id, total_bytes, files}`, `Progress{id, bytes_done, bytes_per_s}` (≤ 4 Hz),
-`Conflict{id, pending_id, info: ConflictInfo}`, `FileDone{id, path, skipped}`, `Done{id}`, `Failed{id, message}`, `Paused{id}`, `Cancelled{id}`.
+`Conflict{id, pending_id, info: ConflictInfo}`, `ConflictResolved{id, pending_id}` (Wave: the prompt is closed — answered, or covered by «apply to all» given in another transfer of the same enqueue), `FileDone{id, path, skipped}`, `Done{id}`, `Failed{id, message}`, `Paused{id}`, `Cancelled{id}`.
 
 `file_open` opens a regular document or media file via the default OS application. It checks local roots after resolving links, or reads a temporary copy from an active SFTP session (≤ 256 MiB). Unsupported formats and oversized remote files return `Unsupported`.
 

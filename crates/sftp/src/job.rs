@@ -47,7 +47,8 @@ pub(crate) struct Job {
     pub dst_dir: String,
     pub policy: ConflictPolicy,
     pub ctl: Mutex<Ctl>,
-    pub apply_all: Mutex<Option<ConflictChoice>>,
+    /// Wave: shared by all transfers of one enqueue — «apply to all» covers every selected item.
+    pub apply_all: Arc<Mutex<Option<ConflictChoice>>>,
     pub decisions: Mutex<HashMap<String, ConflictChoice>>,
     pub done: Mutex<HashSet<String>>,
     /// Serialises conflict prompts so "apply to all" reaches later files.
@@ -327,7 +328,15 @@ async fn ask(
 ) -> Result<ConflictChoice, SftpError> {
     let pending_id = ConflictId(Uuid::now_v7());
     let (tx, rx) = tokio::sync::oneshot::channel();
-    lk(&ctx.sh.pending).insert(pending_id, tx);
+    {
+        // Wave: «apply to all» may have been given in a sibling transfer since this one decided to ask; the
+        // check and the registration happen under the same lock `conflict_reply` holds while answering.
+        let mut pending = lk(&ctx.sh.pending);
+        if let Some(c) = *lk(&ctx.job.apply_all) {
+            return Ok(c);
+        }
+        pending.insert(pending_id, (tx, Arc::clone(&ctx.job.apply_all)));
+    }
     ctx.sh.emit(TransferEvent::Conflict {
         id: ctx.job.id,
         pending_id,
@@ -349,6 +358,8 @@ async fn ask(
             if all {
                 *lk(&ctx.job.apply_all) = Some(c);
             }
+            // Wave: the prompt is closed (answered here or by «apply to all» in a sibling transfer).
+            ctx.sh.emit(TransferEvent::ConflictResolved { id: ctx.job.id, pending_id });
             Ok(c)
         }
     }

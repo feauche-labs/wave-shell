@@ -16,6 +16,8 @@ use crate::{
 };
 
 pub(crate) type Reply = (ConflictChoice, bool);
+/// Wave: the «apply to all» answer shared by the transfers of one enqueue.
+pub(crate) type Batch = Arc<Mutex<Option<ConflictChoice>>>;
 
 pub(crate) fn lk<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
     m.lock().unwrap_or_else(PoisonError::into_inner)
@@ -27,7 +29,8 @@ pub(crate) struct Shared {
     pub sem: Arc<Semaphore>,
     tx: Mutex<Option<mpsc::UnboundedSender<TransferEvent>>>,
     jobs: Mutex<HashMap<TransferId, Arc<Job>>>,
-    pub pending: Mutex<HashMap<ConflictId, oneshot::Sender<Reply>>>,
+    /// Open prompts: the reply channel and the «apply to all» slot of the prompt's enqueue (Wave).
+    pub pending: Mutex<HashMap<ConflictId, (oneshot::Sender<Reply>, Batch)>>,
 }
 
 impl Shared {
@@ -86,6 +89,7 @@ impl TransferEngine {
         let src = Side::from(&job.src);
         let dst = Side::from(&job.dst);
         let mut ids = Vec::with_capacity(job.items.len());
+        let batch: Batch = Arc::new(Mutex::new(None));
         for item in &job.items {
             let id = TransferId(Uuid::now_v7());
             let name = dst_name(&src, &dst, &base_name(&src, item))
@@ -102,7 +106,7 @@ impl TransferEngine {
                     token: CancellationToken::new(),
                     active: true,
                 }),
-                apply_all: Mutex::new(None),
+                apply_all: Arc::clone(&batch),
                 decisions: Mutex::new(HashMap::new()),
                 done: Mutex::new(HashSet::new()),
                 gate: tokio::sync::Mutex::new(()),
@@ -180,16 +184,30 @@ impl TransferEngine {
         self.restart(id, &[Status::Failed, Status::Cancelled])
     }
 
-    /// Answers a conflict; `apply_to_all` covers later conflicts of the same transfer.
+    /// Answers a conflict; `apply_to_all` covers later conflicts of the same transfer and (Wave) every
+    /// transfer queued with it, including prompts of those already waiting.
     pub fn conflict_reply(
         &self,
         pending_id: ConflictId,
         choice: ConflictChoice,
         apply_to_all: bool,
     ) -> Result<(), SftpError> {
-        let tx = lk(&self.shared.pending)
-            .remove(&pending_id)
-            .ok_or(SftpError::NotFound)?;
+        let mut pending = lk(&self.shared.pending);
+        let (tx, batch) = pending.remove(&pending_id).ok_or(SftpError::NotFound)?;
+        let mut siblings = Vec::new();
+        if apply_to_all {
+            *lk(&batch) = Some(choice);
+            let ids: Vec<ConflictId> = pending
+                .iter()
+                .filter(|(_, (_, b))| Arc::ptr_eq(b, &batch))
+                .map(|(id, _)| *id)
+                .collect();
+            siblings.extend(ids.into_iter().filter_map(|id| pending.remove(&id)));
+        }
+        drop(pending);
+        for (other, _) in siblings {
+            let _ = other.send((choice, true));
+        }
         tx.send((choice, apply_to_all))
             .map_err(|_| SftpError::NotFound)
     }

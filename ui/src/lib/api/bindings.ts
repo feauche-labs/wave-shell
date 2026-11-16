@@ -1557,6 +1557,12 @@ id: TransferId;
 pending_id: ConflictId; 
 /**  Details. */
 info: ConflictInfo } | 
+/**  Wave: a conflict prompt is closed — answered, or covered by «apply to all» given in another transfer. */
+{ type: "ConflictResolved"; 
+/**  Transfer. */
+id: TransferId; 
+/**  The prompt. */
+pending_id: ConflictId } | 
 /**  One file finished (or skipped). */
 { type: "FileDone"; 
 /**  Transfer. */
