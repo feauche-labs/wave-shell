@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/feauche-labs/wave-shell/compare/v1.3.0...v1.4.0) (2026-11-16)
+
+
+### Добавлено
+
+* окна рабочей области — шапка как в Termius, перетаскивание за шапку, ввод во все окна; меню как в Arc; плавные панели; сниппеты — раскрывающиеся папки и раздел плитками ([514d625](https://github.com/feauche-labs/wave-shell/commit/514d625f7967023bcb9988cfc4a264593b1ed1ba))
+
 ## [1.3.0](https://github.com/feauche-labs/wave-shell/compare/v1.2.0...v1.3.0) (2026-11-16)
 
 
