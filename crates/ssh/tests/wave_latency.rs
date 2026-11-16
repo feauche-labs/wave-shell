@@ -117,7 +117,7 @@ async fn keystroke_echo_latency() {
         sleep(Duration::from_millis(60)).await; // a person typing
         let key = [b'a' + (i % 26) as u8];
         let sent = Instant::now();
-        sh.write(&key).await.expect("write");
+        sh.write(&key).expect("write");
         let first = loop {
             match timeout(Duration::from_secs(2), sh.read()).await {
                 Ok(Some(ShellOutput::Data(d))) => {
@@ -136,7 +136,7 @@ async fn keystroke_echo_latency() {
         sleep_until(first + FLUSH_AFTER).await;
         old.push(ms(Instant::now()));
     }
-    sh.write(b"\x15exit\n").await.ok();
+    sh.write(b"\x15exit\n").ok();
     println!();
     stats("эхо от сервера (сеть + sshd)", raw);
     stats("до экрана, старое правило (8 мс)", old);

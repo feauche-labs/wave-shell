@@ -194,7 +194,7 @@ async fn connect_and_shell_roundtrip() {
         })
         .await
         .expect("shell");
-    sh.write(b"hi\nexit\n").await.expect("write");
+    sh.write(b"hi\nexit\n").expect("write");
     let mut text = Vec::new();
     let mut exit = None;
     while let Ok(Some(item)) = tokio::time::timeout(Duration::from_secs(10), sh.read()).await {

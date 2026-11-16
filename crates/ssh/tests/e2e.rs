@@ -328,9 +328,8 @@ async fn shell_resize_and_throughput() {
         })
         .await
         .expect("shell");
-    sh.resize(120, 40).await.expect("resize");
+    sh.resize(120, 40).expect("resize");
     sh.write(b"stty size; head -c 50000000 /dev/zero | wc -c; exit\n")
-        .await
         .expect("write");
     let mut text = Vec::new();
     while let Some(item) = sh.read().await {

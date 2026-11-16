@@ -5,7 +5,7 @@ use std::sync::{Arc, PoisonError};
 use std::time::Duration;
 
 use ibc_shell_ssh::{ConnectStep, PtyRequest, Shell, ShellOutput};
-use tokio::sync::{mpsc, Notify};
+use tokio::sync::mpsc;
 use tokio::time::Instant;
 
 use crate::api::dto::SessionEvent;
@@ -43,7 +43,9 @@ pub fn spawn_session(state: &AppState, handle: &Arc<SessionHandle>, cols: u16, r
         );
         return;
     }
-    tauri::async_runtime::spawn(run_session(state, handle, rx, closed));
+    // Wave: the SSH pump no longer waits on writes, so it needs no separate close signal.
+    drop(closed);
+    tauri::async_runtime::spawn(run_session(state, handle, rx));
 }
 
 async fn wait_close(rx: &mut mpsc::UnboundedReceiver<ShellCmd>) {
@@ -59,7 +61,6 @@ async fn run_session(
     state: AppState,
     handle: Arc<SessionHandle>,
     mut rx: mpsc::UnboundedReceiver<ShellCmd>,
-    closed: Arc<Notify>,
 ) {
     let events = handle.spec.on_event.clone();
     let fail = |error: ApiError| {
@@ -118,7 +119,7 @@ async fn run_session(
         let _ = state.store.host_touch_connected(*id);
         // Startup command (host or inherited from a folder), typed into the fresh shell.
         if let Some(cmd) = startup_command(&state, *id) {
-            let _ = shell.write(cmd.as_bytes()).await;
+            let _ = shell.write(cmd.as_bytes());
         }
     }
     let _ = events.send(SessionEvent::Connected {
@@ -131,7 +132,7 @@ async fn run_session(
         });
     }
 
-    let user_closed = pump(shell, &mut rx, &closed, &handle).await;
+    let user_closed = pump(shell, &mut rx, &handle).await;
     let reason = if user_closed {
         "closed".to_owned()
     } else {
@@ -181,7 +182,6 @@ async fn end_reason(conn: &ibc_shell_ssh::Connection) -> String {
 async fn pump(
     mut shell: Shell,
     rx: &mut mpsc::UnboundedReceiver<ShellCmd>,
-    closed: &Notify,
     handle: &SessionHandle,
 ) -> bool {
     let mut buf: Vec<u8> = Vec::new();
@@ -226,20 +226,16 @@ async fn pump(
             },
             cmd = rx.recv() => match cmd {
                 Some(ShellCmd::Write(b)) => {
-                    // Raced against the close signal: a server that never opens its
-                    // window must not make `session_close` wait behind this write.
-                    tokio::select! {
-                        r = shell.write(b.as_slice()) => {
-                            if r.is_err() {
-                                break false;
-                            }
-                        }
-                        () = closed.notified() => break true,
+                    // Wave: queued, never awaited here — a write waiting for the server (or for
+                    // russh's queue behind a lagging screen) used to stop this loop from taking
+                    // acks, and the two then waited on each other for good.
+                    if shell.write(b.as_slice()).is_err() {
+                        break false;
                     }
                 }
                 Some(ShellCmd::Resize(c, r)) => {
                     handle.live.lock().unwrap_or_else(PoisonError::into_inner).size = (c, r);
-                    let _ = shell.resize(c, r).await;
+                    let _ = shell.resize(c, r);
                 }
                 Some(ShellCmd::Ack(n)) => shell.ack(n),
                 Some(ShellCmd::Close) | None => break true,
