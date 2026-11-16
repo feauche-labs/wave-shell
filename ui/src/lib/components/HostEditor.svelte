@@ -8,7 +8,7 @@
   import { errorText } from '$lib/util/errors';
   import { hkey, inheritedFlag } from '$lib/util/tree-model';
   import DefaultsFields from './DefaultsFields.svelte';
-  import FlagPicker from './FlagPicker.svelte';
+  import LookPicker from '$lib/wave/look/LookPicker.svelte'; // Wave: flag / icon / emoji
   import Sheet from './Sheet.svelte';
   // Wave: tags of the host and a key picked from the Keys section.
   import TagInput from '$lib/wave/TagInput.svelte';
@@ -218,8 +218,8 @@
         <TagInput id="h-tags" bind:names={tagNames} />
       </div>
       <div class="fld">
-        <span class="lbl">{m.field_flag()}</span>
-        <FlagPicker value={flag} inherited={inheritedF} onchange={(c) => (flag = c)} />
+        <span class="lbl">{m.wave_look_field()}</span>
+        <LookPicker value={flag} inherited={inheritedF} onchange={(c) => (flag = c)} />
       </div>
     </section>
 

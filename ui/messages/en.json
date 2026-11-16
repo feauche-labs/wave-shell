@@ -928,5 +928,16 @@
   "wave_snip_loose": "Snippets",
   "wave_snip_nofolder": "No folder",
   "wave_snip_all": "All snippets",
-  "wave_snip_found": "Found"
+  "wave_snip_found": "Found",
+  "wave_look_field": "Icon",
+  "wave_look_hint": "Optional. A flag, an icon or an emoji shown in the list on the left; hosts inside use it unless they have their own.",
+  "wave_look_search": "Find an icon, flag or emoji",
+  "wave_look_icons": "Icons",
+  "wave_look_flags": "Flags",
+  "wave_look_emoji": "Emoji",
+  "wave_look_none": "No icon",
+  "wave_look_more": "Choose…",
+  "wave_color_field": "Colour",
+  "wave_color_hint": "Optional. A line of this colour runs along the folder hosts in the list on the left; the name is tinted.",
+  "wave_color_none": "No colour"
 }

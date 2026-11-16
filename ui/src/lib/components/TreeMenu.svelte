@@ -3,6 +3,10 @@
   import { ContextMenu } from 'bits-ui';
   import { ChevronRight } from '@lucide/svelte';
   import Flag from '$lib/flags/Flag.svelte';
+  import { flagName, type FlagLocale } from '$lib/flags/flags';
+  import { getLocale } from '$lib/paraglide/runtime.js';
+  import { COLORS, lookName } from '$lib/wave/look/catalog';
+  import { folderColors } from '$lib/wave/look/colors.svelte';
   import * as m from '$lib/paraglide/messages.js';
   import { connectAnother, connectFolder, connectHost, hostsInFolder } from '$lib/stores/actions';
   import { sessions } from '$lib/stores/sessions.svelte';
@@ -39,6 +43,11 @@
   function flag(code: string | null) {
     if (code) settings.pushRecentFlag(code);
     for (const k of keys) void tree.setFlag(k, code);
+  }
+  // Wave: icons / emoji and folder colours.
+  const locale = getLocale() as FlagLocale;
+  function paint(color: string | null) {
+    for (const k of keys) if (k.startsWith('f:')) folderColors.set(k.slice(2), color);
   }
   function edit() {
     if (!row) return;
@@ -91,21 +100,44 @@
 
   <ContextMenu.Sub>
     <ContextMenu.SubTrigger class="menu-item">
-      <span class="grow">{m.menu_set_flag()}</span><ChevronRight size={14} />
+      <span class="grow">{m.wave_look_field()}</span><ChevronRight size={14} />
     </ContextMenu.SubTrigger>
     <!-- Wave: in a portal — inside the menu (overflow + backdrop-filter) the submenu was clipped away. -->
     <ContextMenu.Portal>
       <ContextMenu.SubContent class="menu" sideOffset={14}>
-        {@render item(m.flag_none(), () => flag(null))}
+        {@render item(m.wave_look_none(), () => flag(null))}
         {#each settings.recentFlags as code (code)}
           <ContextMenu.Item class="menu-item" onSelect={() => flag(code)}>
-            <Flag {code} size={14} /><span>{code.toUpperCase()}</span>
+            <Flag {code} size={14} /><span
+              >{lookName(code.includes(':') ? code : 'flag:' + code, locale, flagName)}</span
+            >
           </ContextMenu.Item>
         {/each}
-        {#if only}{@render item(m.menu_more(), edit)}{/if}
+        {#if only}{@render item(m.wave_look_more(), edit)}{/if}
       </ContextMenu.SubContent>
     </ContextMenu.Portal>
   </ContextMenu.Sub>
+
+  {#if keys.every((k) => k.startsWith('f:'))}
+    <!-- Wave: folder colour -->
+    <ContextMenu.Sub>
+      <ContextMenu.SubTrigger class="menu-item">
+        <span class="grow">{m.wave_color_field()}</span><ChevronRight size={14} />
+      </ContextMenu.SubTrigger>
+      <ContextMenu.Portal>
+        <ContextMenu.SubContent class="menu" sideOffset={14}>
+          {@render item(m.wave_color_none(), () => paint(null))}
+          {#each COLORS as c (c.id)}
+            <ContextMenu.Item class="menu-item" onSelect={() => paint(c.id)}>
+              <span class="wave-dot" style:background={c.hex}></span><span
+                >{locale === 'ru' ? c.ru : c.en}</span
+              >
+            </ContextMenu.Item>
+          {/each}
+        </ContextMenu.SubContent>
+      </ContextMenu.Portal>
+    </ContextMenu.Sub>
+  {/if}
 
   <ContextMenu.Sub>
     <ContextMenu.SubTrigger class="menu-item">
@@ -137,5 +169,11 @@
 <style>
   :global(.grow) {
     flex: 1;
+  }
+  .wave-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    opacity: 0.85;
   }
 </style>

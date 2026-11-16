@@ -27,6 +27,7 @@
   import { waveKeys } from '$lib/wave/keys.svelte';
   import { waveTags } from '$lib/wave/tags.svelte';
   import { wavePeek } from '$lib/wave/sidebar-peek.svelte';
+  import { folderColors } from '$lib/wave/look/colors.svelte';
   import Sidebar from './Sidebar.svelte';
   import TabBar from './TabBar.svelte';
   import Toasts from './Toasts.svelte';
@@ -40,6 +41,8 @@
   $effect(() => untrack(() => void waveKeys.load()));
   // Wave: tag names for search and chips from the start.
   $effect(() => untrack(() => void waveTags.load()));
+  // Wave: folder colours (line along the hosts of a folder in the list).
+  $effect(() => untrack(() => void folderColors.load()));
 
   const native = isTauri();
   const mac = native && isMac;

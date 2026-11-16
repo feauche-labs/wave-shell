@@ -10,10 +10,23 @@
   import TreeMenu from './TreeMenu.svelte';
   import TreeRowContent from './TreeRowContent.svelte';
   import './tree.css';
+  import { folderColors } from '$lib/wave/look/colors.svelte';
 
   const ROW = 30;
   const OVERSCAN = 8;
   const INDENT = 14;
+  /** Wave: a line of the nearest coloured ancestor folder, under that folder's chevron. */
+  function waveLine(parentId: string | null, depth: number): { hex: string; x: number } | null {
+    let id = parentId;
+    let d = depth - 1;
+    while (id) {
+      const hex = folderColors.hex(id);
+      if (hex) return { hex, x: 8 + d * INDENT + 8 };
+      id = tree.folder(id)?.parent_id ?? null;
+      d -= 1;
+    }
+    return null;
+  }
 
   let scroller = $state<HTMLDivElement>();
   let scrollTop = $state(0);
@@ -312,6 +325,8 @@
         {#each visible as row, n (row.key)}
           {@const i = start + n}
           {@const sel = tree.selected.has(row.key)}
+          {@const line = waveLine(row.parentId, row.depth)}
+          {@const own = row.kind === 'folder' ? folderColors.hex(row.id) : null}
           <div
             id={'ti-' + row.key}
             class="row"
@@ -326,6 +341,11 @@
             aria-expanded={row.kind === 'folder' ? row.expanded : undefined}
             style:top="{i * ROW}px"
             style:padding-left="{8 + row.depth * INDENT}px"
+            class:wave-lined={!!line}
+            class:wave-tinted={!!own}
+            style:--wave-line={line?.hex}
+            style:--wave-line-x={line ? line.x + 'px' : undefined}
+            style:--look-color={own ?? undefined}
             onclick={(e) => onRowClick(e, row)}
             ondblclick={() => row.kind === 'host' && connectHost(row.id)}
             onkeydown={null}

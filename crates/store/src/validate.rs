@@ -39,10 +39,75 @@ pub(crate) fn port(field: &str, v: Option<u16>) -> Result<()> {
 /// shape (2..=6 ASCII letters) is checked.
 pub(crate) fn country(v: Option<String>) -> Result<Option<String>> {
     let Some(v) = v else { return Ok(None) };
+    // Wave: the same field also holds an icon or an emoji instead of a flag (`icon:server`, `emoji:🏠`).
+    if let Some(look) = wave_look(&v) {
+        return look.map(Some);
+    }
     let v = v.to_ascii_lowercase();
     let shape = (2..=6).contains(&v.len()) && v.bytes().all(|b| b.is_ascii_lowercase());
     if !shape || (!KNOWN_FLAGS.is_empty() && !KNOWN_FLAGS.contains(&v.as_str())) {
         return bad("country_code: unknown flag");
     }
     Ok(Some(v))
+}
+
+/// Wave: `icon:<id>` (lowercase letters, digits, dashes) or `emoji:<one emoji>`; None = not a look.
+fn wave_look(v: &str) -> Option<Result<String>> {
+    if let Some(id) = v.strip_prefix("icon:") {
+        let ok = (1..=40).contains(&id.len())
+            && id
+                .bytes()
+                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+        return Some(if ok {
+            Ok(v.to_owned())
+        } else {
+            bad("country_code: bad icon")
+        });
+    }
+    if let Some(e) = v.strip_prefix("emoji:") {
+        let n = e.chars().count();
+        let ok = (1..=12).contains(&n)
+            && !e
+                .chars()
+                .any(|c| c.is_control() || c.is_whitespace() || c.is_ascii());
+        return Some(if ok {
+            Ok(v.to_owned())
+        } else {
+            bad("country_code: bad emoji")
+        });
+    }
+    None
+}
+
+#[cfg(test)]
+mod wave_look_tests {
+    use super::country;
+
+    #[test]
+    fn icons_and_emoji_pass_flags_still_checked() {
+        assert_eq!(
+            country(Some("icon:server-cog".into())).unwrap().as_deref(),
+            Some("icon:server-cog")
+        );
+        assert_eq!(
+            country(Some("emoji:🏠".into())).unwrap().as_deref(),
+            Some("emoji:🏠")
+        );
+        assert_eq!(
+            country(Some("emoji:🛡️".into())).unwrap().as_deref(),
+            Some("emoji:🛡️")
+        );
+        assert_eq!(country(Some("DE".into())).unwrap().as_deref(), Some("de"));
+        for bad in [
+            "icon:",
+            "icon:Server",
+            "icon:a b",
+            "emoji:",
+            "emoji:abc",
+            "emoji:🏠 x",
+            "zz9",
+        ] {
+            assert!(country(Some(bad.into())).is_err(), "{bad}");
+        }
+    }
 }

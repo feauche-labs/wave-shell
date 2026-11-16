@@ -183,3 +183,26 @@
   pointer-events: none;
   font-size: var(--fs-sm);
 }
+
+/* Wave: folder colours — a line of the folder's colour along its rows, the folder name and icon tinted. */
+.tree .row.wave-lined::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--wave-line-x);
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: color-mix(in oklab, var(--wave-line) 70%, transparent);
+  pointer-events: none;
+}
+.tree .row.wave-tinted .label {
+  color: color-mix(in oklab, var(--look-color) 70%, var(--text));
+}
+.tree .row.wave-tinted .folder-ic {
+  color: var(--look-color);
+}
+.tree .row.sel.wave-tinted .label {
+  color: inherit;
+}

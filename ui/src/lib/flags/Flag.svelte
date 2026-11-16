@@ -1,5 +1,6 @@
 <script lang="ts">
   import { normalizeCode } from './flags';
+  import LookGlyph from '$lib/wave/look/LookGlyph.svelte'; // Wave: icons and emoji in place of a flag
 
   interface Props {
     /** Flag code, alias or null (renders the grey placeholder). */
@@ -21,7 +22,10 @@
   const label = $derived((resolved ?? code ?? '').slice(0, 2).toUpperCase());
 </script>
 
-{#if src && !failed}
+<!-- Wave: the flag field may hold an icon or an emoji instead (`icon:server`, `emoji:🏠`). -->
+{#if code?.startsWith('icon:') || code?.startsWith('emoji:')}
+  <LookGlyph look={code} {size} {title} />
+{:else if src && !failed}
   <img
     class="flag {className}"
     {src}

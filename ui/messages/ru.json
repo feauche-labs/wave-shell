@@ -928,5 +928,16 @@
   "wave_snip_loose": "Сниппеты",
   "wave_snip_nofolder": "Без папки",
   "wave_snip_all": "Все сниппеты",
-  "wave_snip_found": "Найдено"
+  "wave_snip_found": "Найдено",
+  "wave_look_field": "Значок",
+  "wave_look_hint": "Необязательно. Флаг, значок или смайлик — виден в списке слева; хосты внутри берут его, если у них нет своего.",
+  "wave_look_search": "Найти значок, флаг или смайлик",
+  "wave_look_icons": "Значки",
+  "wave_look_flags": "Флаги",
+  "wave_look_emoji": "Смайлики",
+  "wave_look_none": "Без значка",
+  "wave_look_more": "Выбрать…",
+  "wave_color_field": "Цвет",
+  "wave_color_hint": "Необязательно. Линия этого цвета тянется вдоль хостов папки в списке слева, название подкрашено.",
+  "wave_color_none": "Без цвета"
 }

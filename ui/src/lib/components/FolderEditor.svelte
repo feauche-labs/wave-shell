@@ -4,7 +4,9 @@
   import { tree } from '$lib/stores/tree.svelte';
   import { ui } from '$lib/stores/ui.svelte';
   import { fkey, inheritedFlag } from '$lib/util/tree-model';
-  import FlagPicker from './FlagPicker.svelte';
+  import LookPicker from '$lib/wave/look/LookPicker.svelte'; // Wave: flag / icon / emoji
+  import FolderColorField from '$lib/wave/look/FolderColorField.svelte';
+  import { folderColors } from '$lib/wave/look/colors.svelte';
   import Sheet from './Sheet.svelte';
 
   let { id, parentId }: { id: string | null; parentId: string | null } = $props();
@@ -17,6 +19,8 @@
 
   let name = $state(folder?.name ?? '');
   let flag = $state<string | null>(folder?.country_code ?? null);
+  // Wave: the folder colour (a line along its hosts in the list).
+  let color = $state<string | null>(folderColors.of(folder?.id));
   let error = $state<string | null>(null);
   let busy = $state(false);
 
@@ -26,12 +30,12 @@
     error = null;
     if (!name.trim()) return (error = m.err_name_required());
     busy = true;
-    const ok = folder
+    const saved = folder
       ? await tree.updateFolder(folder.id, {
           ...(name.trim() !== folder.name ? { name: name.trim() } : {}),
           ...(flag !== folder.country_code ? { country_code: flag } : {})
         })
-      : (await tree.createFolder({
+      : ((await tree.createFolder({
           parent_id: parent,
           name: name.trim(),
           country_code: flag,
@@ -44,7 +48,10 @@
             keepalive_s: null,
             term_theme: null
           }
-        })) !== null;
+        })) ?? null);
+    const ok = saved !== null && saved !== false;
+    const fid = folder?.id ?? (saved && typeof saved === 'object' ? saved.id : null);
+    if (ok && fid && color !== folderColors.of(fid)) folderColors.set(fid, color);
     busy = false;
     if (ok) {
       ui.closeEditor();
@@ -65,8 +72,14 @@
         <input id="f-name" class="input" bind:value={name} autocomplete="off" autofocus />
       </div>
       <div class="fld">
-        <span class="lbl">{m.field_flag()}</span>
-        <FlagPicker value={flag} inherited={inheritedF} onchange={(c) => (flag = c)} />
+        <span class="lbl">{m.wave_look_field()}</span>
+        <LookPicker value={flag} inherited={inheritedF} onchange={(c) => (flag = c)} />
+        <p class="note">{m.wave_look_hint()}</p>
+      </div>
+      <div class="fld">
+        <span class="lbl">{m.wave_color_field()}</span>
+        <FolderColorField bind:color />
+        <p class="note">{m.wave_color_hint()}</p>
       </div>
     </section>
     {#if error}<p class="error" role="alert">{error}</p>{/if}
