@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.5.0](https://github.com/feauche-labs/wave-shell/compare/v1.4.0...v1.5.0) (2026-11-16)
+
+
+### Добавлено
+
+* значки и цвета папок — флаг, значок или смайлик с поиском, 10 мягких цветов, цветная линия вдоль хостов папки ([2c3a16b](https://github.com/feauche-labs/wave-shell/commit/2c3a16b84a6128ea2fc223a7f72450b45bda38c0))
+
+
+### Исправлено
+
+* «применить ко всем» при совпадении имён файлов срабатывает для всех выбранных файлов, остальные больше не зависают ([cfa5048](https://github.com/feauche-labs/wave-shell/commit/cfa504800079cd14e04359803a1a1fa3bfbb95b6))
+* автоблокировка больше не срабатывает, пока вы печатаете в терминале ([2e4d456](https://github.com/feauche-labs/wave-shell/commit/2e4d4567cf4f2966bf442e35f60e9416d6856b18))
+* в меню папки и хоста снова открываются «Флаг» и «Переместить в» ([cd9992e](https://github.com/feauche-labs/wave-shell/commit/cd9992e7760a8fe409bbb85c5cf1275669268108))
+* в разделённом экране буквы уходят в подсвеченное окно, а не в соседнее ([0a87711](https://github.com/feauche-labs/wave-shell/commit/0a87711d4f6907f2f238745ffebb421dd60e8e0a))
+* загрузка на сервер, который не даёт менять дату файла, больше не обрывается в конце ([a305fc3](https://github.com/feauche-labs/wave-shell/commit/a305fc32eaf1366862f8504dbe2432c7f7304099))
+* подменю «Флаг» и «Переместить в» больше не прилипает к меню ([b927a44](https://github.com/feauche-labs/wave-shell/commit/b927a44bbcefc28b39b1937f78d9c93b5c463ea4))
+* терминал больше не прячет приглашение и набираемые буквы в fish, vim и neovim ([fe646ae](https://github.com/feauche-labs/wave-shell/commit/fe646ae304b397d8b689f7120f5f621dda21a8c3))
+
+
+### Из iBC Shell
+
+* iBC Shell 2.0.2 — возврат хоста из отдельного окна во вкладки (без отрыва вкладки) ([43053f6](https://github.com/feauche-labs/wave-shell/commit/43053f643b0ce6e09d00fb38ec5712109de51c59))
+
 ## [1.4.0](https://github.com/feauche-labs/wave-shell/compare/v1.3.0...v1.4.0) (2026-11-16)
 
 
