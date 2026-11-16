@@ -95,7 +95,7 @@
     </ContextMenu.SubTrigger>
     <!-- Wave: in a portal — inside the menu (overflow + backdrop-filter) the submenu was clipped away. -->
     <ContextMenu.Portal>
-      <ContextMenu.SubContent class="menu" sideOffset={4}>
+      <ContextMenu.SubContent class="menu" sideOffset={14}>
         {@render item(m.flag_none(), () => flag(null))}
         {#each settings.recentFlags as code (code)}
           <ContextMenu.Item class="menu-item" onSelect={() => flag(code)}>
@@ -113,7 +113,7 @@
     </ContextMenu.SubTrigger>
     <!-- Wave: in a portal — inside the menu (overflow + backdrop-filter) the submenu was clipped away. -->
     <ContextMenu.Portal>
-      <ContextMenu.SubContent class="menu" sideOffset={4}>
+      <ContextMenu.SubContent class="menu" sideOffset={14}>
         {@render item(m.menu_top_level(), () => moveTo(null))}
         {#each targets as t (t.id)}
           <ContextMenu.Item
