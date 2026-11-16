@@ -33,6 +33,18 @@ AAAEBpExXls+OkMCOV+0lvM7tv4lCconrTA8VEu/lb4/uEkyNYX1cwaic285lLmNC3A3b4
 -----END OPENSSH PRIVATE KEY-----
 ";
 
+/// A throwaway ECDSA P-256 key made for this test only (the `tests/fixtures/keys` folder is generated
+/// locally and is not in the repository, so CI has no such file).
+const ECDSA: &str = "-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
+1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQR1f+EZjw9UvvT2+DFZLw2hanhCCa+K
+6so/yw1AKrR30gTkL+gD2QPzXvz7LN9g+Pkt5B2s761zfzZZNaArozfJAAAAoCEDxZYhA8
+WWAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHV/4RmPD1S+9Pb4
+MVkvDaFqeEIJr4rqyj/LDUAqtHfSBOQv6APZA/Ne/Pss32D4+S3kHazvrXN/Nlk1oCujN8
+kAAAAhAMVNFstgCi6k9RFleOQQ1BZrTHEAN+4J4MxoflhWdAsSAAAABHRlc3QBAgM=
+-----END OPENSSH PRIVATE KEY-----
+";
+
 #[derive(Clone)]
 struct Mock;
 
@@ -88,12 +100,7 @@ impl Prompter for Ui {
 
 #[tokio::test]
 async fn a_new_key_type_on_a_known_server_is_not_a_changed_key() {
-    let ecdsa_pem = std::fs::read_to_string(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../tests/fixtures/keys/id_ecdsa_p256"
-    ))
-    .expect("ecdsa fixture");
-    let ecdsa = decode_secret_key(&ecdsa_pem, None).expect("ecdsa key");
+    let ecdsa = decode_secret_key(ECDSA, None).expect("ecdsa key");
     let ed = decode_secret_key(ED25519, None).expect("ed25519 key");
     let config = Config {
         keys: vec![ed, ecdsa.clone()],

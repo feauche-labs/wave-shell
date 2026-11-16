@@ -2,6 +2,8 @@
 //! fails or is cancelled, the user's file has to get its name back — it used to vanish from the folder, only
 //! `name.tlpart` remained. Local → local; the failure: the partial file is read-only (an earlier download kept
 //! 0444) — it can be renamed, but not written to.
+// Unix permissions (a read-only partial file) make the copy fail; Windows has no such mode bits.
+#![cfg(unix)]
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, missing_docs)]
 
 use std::os::unix::fs::PermissionsExt;
