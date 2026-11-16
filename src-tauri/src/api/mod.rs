@@ -26,6 +26,7 @@ pub const PASSIVE_COMMANDS: &[&str] = &[
     "vault_status",
     "transfers_subscribe",
     "stats_sample",
+    "wave_net_info",
     "host_probe",
     "host_lookup_ip",
     "docker_list",
@@ -130,6 +131,8 @@ pub fn builder() -> Builder<tauri::Wry> {
         sftp::transfer_conflict_reply,
         sftp::transfers_subscribe,
         stats::stats_sample,
+        // Wave: addresses and per-address traffic (Status → Network).
+        crate::wave::net::wave_net_info,
         probe::host_probe,
         probe::host_lookup_ip,
         services::docker_list,

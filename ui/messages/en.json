@@ -909,5 +909,13 @@
   "wave_split_close": "Disconnect",
   "wave_split_dissolve": "Split the workspace into tabs",
   "wave_split_drop": "Release to split the screen",
-  "wave_split_resize": "Drag to resize"
+  "wave_split_resize": "Drag to resize",
+  "wave_net_in": "clients come in",
+  "wave_net_out": "goes out to the internet here",
+  "wave_net_src": "outgoing address",
+  "wave_net_conns_in": "inbound: {count}",
+  "wave_net_conns_out": "outbound: {count}",
+  "wave_net_note": "Per-address rates come from TCP connections (Xray, web); UDP shows only in the interface totals.",
+  "wave_net_route": "To the internet: {src} via {dev}",
+  "wave_net_loading": "Reading addresses…"
 }

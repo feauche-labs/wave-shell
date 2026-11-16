@@ -11,6 +11,7 @@ import * as forwards from './mock/forwards';
 import * as geo from './mock/geo';
 import * as services from './mock/services';
 import * as sftp from './mock/sftp';
+import * as wave from './mock/wave'; // Wave
 import * as stats from './mock/stats';
 import * as term from './mock/terminal';
 import * as tree from './mock/tree';
@@ -129,6 +130,7 @@ export const mockApi: Api = {
   transfersSubscribe: sftp.transfersSubscribe,
   // stats
   statsSample: stats.statsSample,
+  waveNetInfo: wave.waveNetInfo,
   hostProbe: stats.hostProbe,
   hostLookupIp: geo.hostLookupIp,
   // services

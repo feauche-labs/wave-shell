@@ -12,6 +12,7 @@
   import { ui } from '$lib/stores/ui.svelte';
   import { vault } from '$lib/stores/vault.svelte';
   import { rank } from '$lib/util/fuzzy';
+  import { waveTags } from '$lib/wave/tags.svelte';
   import { parseQuickConnect } from '$lib/util/quickconnect';
   import { fkey, folderChain, inheritedFlag } from '$lib/util/tree-model';
 
@@ -104,7 +105,11 @@
       id: 'h:' + h.id,
       group: 'host',
       label: h.label,
-      hint: `${h.username ? h.username + '@' : ''}${h.hostname}`,
+      // Wave: tags are searchable and shown next to the address.
+      hint: [
+        `${h.username ? h.username + '@' : ''}${h.hostname}`,
+        ...waveTags.names(h.tag_ids)
+      ].join(' · '),
       flag: h.country_code ?? inheritedFlag(tree.data, h.folder_id)?.value ?? null,
       icon: 'terminal',
       run: (shift) => connectHost(h.id, shift ? 'sftp' : 'terminal')

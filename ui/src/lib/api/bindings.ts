@@ -211,6 +211,8 @@ export const commands = {
 	 *  are re-read every 15 s and reused from the last full sample in between.
 	 */
 	statsSample: (sessionId: SessionId) => typedError<HostStats, ApiError>(__TAURI_INVOKE("stats_sample", { sessionId })),
+	/**  Reads addresses and per-address traffic of the session's server. Takes ~1 s. Passive for auto-lock. */
+	waveNetInfo: (sessionId: SessionId) => typedError<WaveNetInfo, ApiError>(__TAURI_INVOKE("wave_net_info", { sessionId })),
 	/**  Checks a saved host's SSH port without using credentials or modifying host-key trust. */
 	hostProbe: (hostId: HostId) => typedError<HostReachability, ApiError>(__TAURI_INVOKE("host_probe", { hostId })),
 	/**
@@ -1673,6 +1675,41 @@ export type VaultStatus = {
 	mode: VaultMode | null,
 	/**  Biometric unlock possible. */
 	biometric_available: boolean,
+};
+
+/**  An address on a network interface (global scope only). */
+export type WaveAddr = {
+	iface: string,
+	addr: string,
+	prefix: number,
+	v6: boolean,
+};
+
+/**  TCP traffic of one local address. */
+export type WaveLocal = {
+	addr: string,
+	/**  Established connections to a listening port of this address (clients coming in). */
+	inbound: number,
+	/**  Established connections started from this address (the server going out). */
+	outbound: number,
+	/**  Bytes per second received / sent over those connections (TCP only). */
+	rx_bps: number | null,
+	tx_bps: number | null,
+};
+
+/**  Addresses, routes and per-address TCP traffic of a server. */
+export type WaveNetInfo = {
+	addrs: WaveAddr[],
+	route_v4: WaveRoute | null,
+	route_v6: WaveRoute | null,
+	locals: WaveLocal[],
+};
+
+/**  Where traffic to the internet leaves: interface, source address, gateway. */
+export type WaveRoute = {
+	dev: string,
+	src: string | null,
+	via: string | null,
 };
 
 /* Tauri Specta runtime */

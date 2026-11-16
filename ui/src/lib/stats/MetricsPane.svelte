@@ -63,7 +63,7 @@
         {#if phase === 'connecting'}<span class="dot" data-phase="connecting"></span>{/if}
       </p>
       <header class="head" class:wide>{@render facts(d)}</header>
-      <StatsCards {s} {d} {wide} />
+      <StatsCards {s} {d} {wide} {sid} />
     {:else if !sid}
       <EmptyState
         icon={ServerCog}
@@ -90,7 +90,7 @@
           ><i></i>{s.stale ? m.stat_stale() : wide ? m.stat_live() : m.stat_live_short()}</span
         >
       </header>
-      <StatsCards {s} {d} {wide} />
+      <StatsCards {s} {d} {wide} {sid} />
     {/if}
   </div>
 {/key}

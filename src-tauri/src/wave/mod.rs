@@ -1,6 +1,7 @@
 //! Wave Shell additions on top of iBC Shell, kept in their own module so upstream merges stay clean.
 
 pub(crate) mod coalesce;
+pub(crate) mod net;
 
 /// Self-update and the relaunch after it (desktop only).
 ///

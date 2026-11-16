@@ -25,6 +25,7 @@
   import UpdateSheet from '$lib/wave/UpdateSheet.svelte';
   import { waveUpdate } from '$lib/wave/update.svelte';
   import { waveKeys } from '$lib/wave/keys.svelte';
+  import { waveTags } from '$lib/wave/tags.svelte';
   import Sidebar from './Sidebar.svelte';
   import TabBar from './TabBar.svelte';
   import Toasts from './Toasts.svelte';
@@ -36,6 +37,8 @@
   $effect(() => untrack(() => waveUpdate.watch(() => settings.updateCheck)));
   // Wave: key count in the sidebar from the start.
   $effect(() => untrack(() => void waveKeys.load()));
+  // Wave: tag names for search and chips from the start.
+  $effect(() => untrack(() => void waveTags.load()));
 
   const native = isTauri();
   const mac = native && isMac;

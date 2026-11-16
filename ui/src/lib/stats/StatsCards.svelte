@@ -15,11 +15,17 @@
   import CoreBars from './CoreBars.svelte';
   import { bytes, decimal, loadColor, pct, rate } from './format';
   import NetFlows from './NetFlows.svelte';
+  import NetAddrs from '$lib/wave/NetAddrs.svelte';
   import Spark from './Spark.svelte';
   import './stats-cards.css';
 
   /** Metric cards shared by the side panel (narrow column) and the Status page (grid). */
-  let { s, d, wide = false }: { s: Series; d: HostStats; wide?: boolean } = $props();
+  let {
+    s,
+    d,
+    wide = false,
+    sid = null
+  }: { s: Series; d: HostStats; wide?: boolean; sid?: string | null } = $props();
 
   const total = $derived(d.mem_total || 1);
   const cachedShown = $derived(Math.min(d.mem_cached, Math.max(0, d.mem_total - d.mem_used)));
@@ -140,7 +146,10 @@
           ><ArrowUp size={13} /><b>{rate(d.net_tx_bps)[0]}</b>{rate(d.net_tx_bps)[1]}</span
         >
       </div>
-      {#if d.ifaces.length > 1 || wide}
+      {#if wide}
+        <!-- Wave: interfaces with their addresses and where traffic comes in / goes out -->
+        <NetAddrs {sid} ifaces={d.ifaces} />
+      {:else if d.ifaces.length > 1}
         <ul class="ifaces tnum">
           {#each d.ifaces as i (i.name)}
             <li title={m.stat_since_boot({ rx: bytes(i.rx_total), tx: bytes(i.tx_total) })}>

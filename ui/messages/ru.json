@@ -909,5 +909,13 @@
   "wave_split_close": "Отключить",
   "wave_split_dissolve": "Разъединить рабочую область",
   "wave_split_drop": "Отпустите — экран разделится",
-  "wave_split_resize": "Потяните, чтобы изменить размер"
+  "wave_split_resize": "Потяните, чтобы изменить размер",
+  "wave_net_in": "входят подключения",
+  "wave_net_out": "отсюда выходит в интернет",
+  "wave_net_src": "исходящий адрес",
+  "wave_net_conns_in": "входящих: {count}",
+  "wave_net_conns_out": "исходящих: {count}",
+  "wave_net_note": "Скорость по адресу — по TCP-соединениям (Xray, сайты); UDP видно только в сумме по интерфейсу.",
+  "wave_net_route": "В интернет: {src} через {dev}",
+  "wave_net_loading": "Читаю адреса…"
 }

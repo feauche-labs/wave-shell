@@ -41,8 +41,15 @@
   let tagFilter = $state<string | null>(null);
   void waveTags.load();
   const shown = $derived(
-    filterFleet(servers, query, filter)
+    filterFleet(servers, '', filter)
       .filter((s) => !tagFilter || !!s.host?.tag_ids.includes(tagFilter))
+      // Wave: the search also matches tag names.
+      .filter((s) => {
+        const q = query.trim().toLocaleLowerCase();
+        if (!q) return true;
+        const text = [s.label, s.address, s.folder, ...waveTags.names(s.host?.tag_ids)].join(' ');
+        return text.toLocaleLowerCase().includes(q);
+      })
       .sort((x, y) => Number(!!y.group) - Number(!!x.group))
   );
   const online = $derived(servers.filter((s) => s.availability === 'online').length);
