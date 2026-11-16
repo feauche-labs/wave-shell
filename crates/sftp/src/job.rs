@@ -308,6 +308,51 @@ async fn resolve(ctx: &Ctx<'_>, t: &FileTask, final_path: &str) -> Result<Action
     })
 }
 
+/// Copies the source into `tmp` from `start` (re-checked against the source) and moves it to `target`.
+async fn write_part(
+    ctx: &Ctx<'_>,
+    t: &FileTask,
+    tmp: &str,
+    target: &str,
+    mut start: u64,
+) -> Result<(), SftpError> {
+    let (sh, job, token) = (ctx.sh, ctx.job, ctx.token);
+    if start > 0
+        && !prefix_matches(job, t, tmp, start.min(t.size))
+            .await
+            .unwrap_or(false)
+    {
+        start = 0;
+    }
+    ctx.progress.fetch_add(start, Ordering::Relaxed);
+    let src = job.src.open_read(&t.src).await?;
+    let dst = match job.dst.open_write(tmp, start).await {
+        Ok(d) => d,
+        Err(e) => {
+            src.close().await;
+            return Err(e);
+        }
+    };
+    let plan = Plan {
+        chunk: ctx.chunk,
+        depth: sh.config.pipeline_depth,
+        start,
+        size: t.size,
+    };
+    check(token, copy(src, dst, plan, token, ctx.progress).await)?;
+    if job.dst.size_of(tmp).await? != t.size {
+        job.dst.truncate(tmp, t.size).await?;
+        if job.dst.size_of(tmp).await? != t.size {
+            return Err(SftpError::Protocol("size mismatch after transfer".into()));
+        }
+    }
+    job.dst
+        .set_meta(tmp, t.mtime, (t.mode != 0).then_some(t.mode))
+        .await?;
+    job.dst.rename_over(tmp, target).await?;
+    Ok(())
+}
+
 /// First `name (n).ext` next to the destination that does not exist yet.
 async fn free_name(job: &Job, t: &FileTask) -> Result<String, SftpError> {
     let mut n = 1;
@@ -429,6 +474,8 @@ async fn one_file(ctx: &Ctx<'_>, t: &FileTask) -> Result<(), SftpError> {
     }
     let tmp = format!("{target}{TLPART}");
     let mut start = 0u64;
+    // Wave: the user's file was renamed to `*.tlpart` to be resumed — it gets its name back on failure.
+    let mut moved = false;
     match job.dst.lstat(&tmp).await? {
         Some(e) if e.kind == EntryKind::File => {
             if e.size <= t.size {
@@ -439,43 +486,18 @@ async fn one_file(ctx: &Ctx<'_>, t: &FileTask) -> Result<(), SftpError> {
         None => {
             if resume_final {
                 job.dst.rename_over(&target, &tmp).await?;
-                start = job.dst.size_of(&tmp).await?;
+                moved = true;
+                start = job.dst.size_of(&tmp).await.unwrap_or(0);
             }
         }
     }
-    if start > 0
-        && !prefix_matches(job, t, &tmp, start.min(t.size))
-            .await
-            .unwrap_or(false)
-    {
-        start = 0;
-    }
-    ctx.progress.fetch_add(start, Ordering::Relaxed);
-    let src = job.src.open_read(&t.src).await?;
-    let dst = match job.dst.open_write(&tmp, start).await {
-        Ok(d) => d,
-        Err(e) => {
-            src.close().await;
-            return Err(e);
+    let written = write_part(ctx, t, &tmp, &target, start).await;
+    if let Err(e) = written {
+        if moved {
+            let _ = job.dst.rename_over(&tmp, &target).await;
         }
-    };
-    let plan = Plan {
-        chunk: ctx.chunk,
-        depth: sh.config.pipeline_depth,
-        start,
-        size: t.size,
-    };
-    check(token, copy(src, dst, plan, token, ctx.progress).await)?;
-    if job.dst.size_of(&tmp).await? != t.size {
-        job.dst.truncate(&tmp, t.size).await?;
-        if job.dst.size_of(&tmp).await? != t.size {
-            return Err(SftpError::Protocol("size mismatch after transfer".into()));
-        }
+        return Err(e);
     }
-    job.dst
-        .set_meta(&tmp, t.mtime, (t.mode != 0).then_some(t.mode))
-        .await?;
-    job.dst.rename_over(&tmp, &target).await?;
     lk(&job.done).insert(final_path);
     sh.emit(TransferEvent::FileDone {
         id: job.id,
