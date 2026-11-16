@@ -37,4 +37,21 @@ describe('Highlighter', () => {
     // An address in the middle of a line is not a prompt.
     expect(new Highlighter().feed('mail to a@b.c:/x$ now')).not.toContain('1;32m');
   });
+
+  // Wave: fish 4, vim and neovim send key-mode codes with < = > markers, and SGR with colons
+  // (undercurl). They were taken for incomplete sequences: the prompt and typed echo were held back.
+  it('passes private-marker and colon sequences at once', () => {
+    const h = new Highlighter();
+    expect(h.feed('\x1b[>4;1m\x1b[=5uroot@vps:~# ')).toBe(
+      '\x1b[>4;1m\x1b[=5u\x1b[1;32mroot@vps\x1b[22;39m:\x1b[1;34m~\x1b[22;39m# '
+    );
+    expect(h.feed('l')).toBe('l');
+    expect(h.feed('\x1b[<u')).toBe('\x1b[<u');
+    expect(h.feed('\x1b[4:3mwavy\x1b[4:0m')).toBe('\x1b[4:3mwavy\x1b[4:0m');
+  });
+
+  it('keeps colouring after key-mode codes (they are not colours)', () => {
+    const h = new Highlighter();
+    expect(h.feed('\x1b[>4;2mPermission denied')).toBe('\x1b[>4;2mPermission ' + C(31, 'denied'));
+  });
 });

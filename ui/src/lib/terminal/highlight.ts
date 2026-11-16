@@ -18,8 +18,9 @@ const PROMPT =
   // eslint-disable-next-line no-control-regex -- the path stops at the next escape
   /(?<=^|[\r\n])(?:(?<who>[a-z_][\w.-]*@[\w.-]+):(?<path>[~/][^\s\x1b]*)?(?<sign>[#$%] )|\[(?<who2>[a-z_][\w.-]*@[\w.-]+) (?<path2>[^\]\s]+)\](?<sign2>[#$%] ))/g;
 const ALL = new RegExp(RULES.map(([r]) => `(${r.source})`).join('|'), 'gi');
+// Wave: parameter bytes are the whole 0x30–0x3F range (digits : ; < = > ?), as ECMA-48 defines them.
 // eslint-disable-next-line no-control-regex -- matching terminal escape sequences is the point
-const CSI = /^\x1b\[([0-9;?]*)([ -/]*)([@-~])/;
+const CSI = /^\x1b\[([0-?]*)([ -/]*)([@-~])/;
 
 export class Highlighter {
   /** Default foreground in effect (we only colour text the program did not colour). */
@@ -58,7 +59,8 @@ export class Highlighter {
       const m = CSI.exec(s.slice(at, at + 64));
       if (!m) return s.length - at < 64 ? 0 : 2;
       const [all, params = '', , final] = m;
-      if (final === 'm' && !params.startsWith('?')) {
+      // Wave: a leading < = > ? is a private mode (key reporting etc.), not a colour change.
+      if (final === 'm' && !/^[<=>?]/.test(params)) {
         this.#plain = /^[0;]*$/.test(params) || params === '39' || /(^|;)0;?39?$/.test(params);
       } else if ((final === 'h' || final === 'l') && /^\?(1049|1047|47)$/.test(params)) {
         this.#alt = final === 'h';
