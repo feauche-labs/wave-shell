@@ -53,4 +53,23 @@ describe('watchIdle', () => {
     expect(idle).not.toHaveBeenCalled();
     expect(handlers.size).toBe(0);
   });
+
+  // Wave: xterm stops keydown from bubbling (letters, Enter, arrows, Ctrl keys), so typing in a terminal
+  // never reached a bubble-phase listener on window and the app locked mid-typing, closing every session.
+  it('typing in the terminal (event stopped before it bubbles) still counts', () => {
+    const capture = new Map<string, () => void>();
+    const bubble = new Map<string, () => void>();
+    const win: IdleTarget = {
+      addEventListener: (t: string, h: unknown, o?: boolean | AddEventListenerOptions) =>
+        void (typeof o === 'object' && o.capture ? capture : bubble).set(t, h as () => void),
+      removeEventListener: () => {}
+    };
+    const idle = vi.fn();
+    watchIdle(1, idle, win);
+    vi.advanceTimersByTime(50_000);
+    // The terminal swallows the key: only capture-phase listeners on window see it.
+    capture.get('keydown')?.();
+    vi.advanceTimersByTime(50_000);
+    expect(idle).not.toHaveBeenCalled();
+  });
 });

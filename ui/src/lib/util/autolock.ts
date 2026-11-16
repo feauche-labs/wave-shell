@@ -39,9 +39,10 @@ export function watchIdle(
     clearTimeout(timer);
     timer = setTimeout(onIdle, ms);
   };
-  for (const e of ACTIVITY) target.addEventListener(e, bump, { passive: true });
+  // Wave: capture phase — the terminal (xterm) stops keydown from bubbling, so typing went unnoticed.
+  for (const e of ACTIVITY) target.addEventListener(e, bump, { passive: true, capture: true });
   return () => {
     clearTimeout(timer);
-    for (const e of ACTIVITY) target.removeEventListener(e, bump);
+    for (const e of ACTIVITY) target.removeEventListener(e, bump, { capture: true });
   };
 }
