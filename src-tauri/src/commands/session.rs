@@ -203,6 +203,16 @@ pub async fn session_reconnect(state: State<'_, AppState>, session_id: SessionId
     }
     let (cols, rows) = handle.live.lock().map_or((80, 24), |l| l.size);
     spawn_session(&state, &handle, cols.max(1), rows.max(1));
+    // Wave: `session_close` may have removed the session in the meantime; its Close went to the old,
+    // dead channel, so the session just started would run on with nobody able to close it.
+    if !state
+        .sessions
+        .get(&session_id)
+        .is_some_and(|h| Arc::ptr_eq(&h, &handle))
+    {
+        handle.send(ShellCmd::Close);
+        return Err(ApiError::NotFound);
+    }
     Ok(())
 }
 

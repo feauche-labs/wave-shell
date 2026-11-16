@@ -336,11 +336,18 @@ export class Connection {
   async reconnect(): Promise<void> {
     if (!this.#id || this.phase !== 'disconnected' || !this.canReconnect) return;
     this.auto.cancel();
+    const reason = this.reason;
     this.phase = 'connecting';
     this.step = null;
     this.reason = null;
     this.log.reset();
-    await api.sessionReconnect(this.#id);
+    const r = await api.sessionReconnect(this.#id);
+    if (r.status === 'ok' || this.#closed) return;
+    // Wave: a refused reconnect used to leave the tab on «Connecting…» for good. The session is gone →
+    // start a fresh one; otherwise back to «disconnected» so the button works again.
+    if (r.error.code === 'NotFound') return this.retry();
+    this.phase = 'disconnected';
+    this.reason = reason;
   }
 
   /** One automatic attempt; a refused request waits for the next one. */

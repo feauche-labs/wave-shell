@@ -145,6 +145,9 @@ async fn run_session(
         .conn = None;
     crate::forwards::stop_all(&handle);
     conn.disconnect().await;
+    // Wave: let go of the command channel before telling the UI — until then `is_running` is still
+    // true and a «Reconnect» click right after this event was refused.
+    drop(rx);
     let _ = events.send(SessionEvent::Disconnected {
         reason,
         can_reconnect: !user_closed,
