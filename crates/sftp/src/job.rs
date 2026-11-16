@@ -302,10 +302,62 @@ async fn resolve(ctx: &Ctx<'_>, t: &FileTask, final_path: &str) -> Result<Action
             }
         }
         ConflictChoice::Rename => Action::Go {
-            target: free_name(job, t).await?,
+            target: free_name(ctx.sh, job, t).await?,
             resume_final: false,
         },
     })
+}
+
+/// Wave: a destination path taken by a file of the queue until its copy ends — two files never write one
+/// place at once (a renamed `a.txt` → `a (1).txt` next to a copied `a (1).txt`, `Readme.md` / `README.md` on a
+/// case-insensitive disk). Dropping it frees the path.
+struct Claim {
+    sh: Arc<Shared>,
+    key: String,
+}
+
+impl Drop for Claim {
+    fn drop(&mut self) {
+        lk(&self.sh.claimed).remove(&self.key);
+    }
+}
+
+/// Local disks of macOS and Windows ignore letter case, so `README.md` and `Readme.md` are one file there.
+fn claim_key(side: &Side, path: &str) -> String {
+    if side.is_local() && cfg!(any(target_os = "macos", target_os = "windows")) {
+        path.to_lowercase()
+    } else {
+        path.to_owned()
+    }
+}
+
+fn try_claim(sh: &Arc<Shared>, side: &Side, path: &str) -> Option<Claim> {
+    let key = claim_key(side, path);
+    lk(&sh.claimed).insert(key.clone()).then(|| Claim {
+        sh: Arc::clone(sh),
+        key,
+    })
+}
+
+/// Takes `target` for this file; when another file of the queue is writing there, moves to a free name.
+async fn claim_target(
+    sh: &Arc<Shared>,
+    job: &Job,
+    t: &FileTask,
+    target: &mut String,
+    resume_final: &mut bool,
+) -> Result<Claim, SftpError> {
+    if let Some(c) = try_claim(sh, &job.dst, target) {
+        return Ok(c);
+    }
+    *resume_final = false;
+    loop {
+        let cand = free_name(sh, job, t).await?;
+        if let Some(c) = try_claim(sh, &job.dst, &cand) {
+            *target = cand;
+            return Ok(c);
+        }
+    }
 }
 
 /// Copies the source into `tmp` from `start` (re-checked against the source) and moves it to `target`.
@@ -353,12 +405,14 @@ async fn write_part(
     Ok(())
 }
 
-/// First `name (n).ext` next to the destination that does not exist yet.
-async fn free_name(job: &Job, t: &FileTask) -> Result<String, SftpError> {
+/// First `name (n).ext` next to the destination that does not exist yet (and, Wave, that no other file of
+/// the queue is writing right now).
+async fn free_name(sh: &Shared, job: &Job, t: &FileTask) -> Result<String, SftpError> {
     let mut n = 1;
     loop {
         let cand = job.dst.join(&t.dst_dir, &renamed(&t.dst_name, n));
-        if job.dst.lstat(&cand).await?.is_none() {
+        let taken = lk(&sh.claimed).contains(&claim_key(&job.dst, &cand));
+        if !taken && job.dst.lstat(&cand).await?.is_none() {
             return Ok(cand);
         }
         n += 1;
@@ -468,10 +522,11 @@ async fn one_file(ctx: &Ctx<'_>, t: &FileTask) -> Result<(), SftpError> {
             .await
             .unwrap_or(false)
         {
-            target = free_name(job, t).await?;
+            target = free_name(sh, job, t).await?;
             resume_final = false;
         }
     }
+    let _claim = claim_target(sh, job, t, &mut target, &mut resume_final).await?;
     let tmp = format!("{target}{TLPART}");
     let mut start = 0u64;
     // Wave: the user's file was renamed to `*.tlpart` to be resumed — it gets its name back on failure.
@@ -505,4 +560,16 @@ async fn one_file(ctx: &Ctx<'_>, t: &FileTask) -> Result<(), SftpError> {
         skipped: false,
     });
     Ok(())
+}
+
+#[cfg(test)]
+mod wave_claim_tests {
+    use super::{claim_key, Side};
+
+    #[test]
+    fn letter_case_is_one_place_on_case_insensitive_local_disks() {
+        let same =
+            claim_key(&Side::Local, "/d/Readme.md") == claim_key(&Side::Local, "/d/README.md");
+        assert_eq!(same, cfg!(any(target_os = "macos", target_os = "windows")));
+    }
 }

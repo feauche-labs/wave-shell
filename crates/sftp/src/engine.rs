@@ -31,6 +31,8 @@ pub(crate) struct Shared {
     jobs: Mutex<HashMap<TransferId, Arc<Job>>>,
     /// Open prompts: the reply channel and the «apply to all» slot of the prompt's enqueue (Wave).
     pub pending: Mutex<HashMap<ConflictId, (oneshot::Sender<Reply>, Batch)>>,
+    /// Wave: destination paths files of the queue are writing right now (see `job::Claim`).
+    pub claimed: Mutex<HashSet<String>>,
 }
 
 impl Shared {
@@ -71,6 +73,7 @@ impl TransferEngine {
                 tx: Mutex::new(None),
                 jobs: Mutex::new(HashMap::new()),
                 pending: Mutex::new(HashMap::new()),
+                claimed: Mutex::new(HashSet::new()),
             }),
         }
     }
