@@ -126,7 +126,7 @@ impl Side {
         }
     }
 
-    /// Applies mtime (unix ms) and permission bits; best effort on `mode`.
+    /// Applies mtime (unix ms) and permission bits; best effort on both for a remote side.
     pub(crate) async fn set_meta(
         &self,
         path: &str,
@@ -139,8 +139,10 @@ impl Side {
                 blocking(move || set_local_meta(&p, mtime, mode)).await
             }
             Self::Remote(s) => {
+                // Wave: best effort like `mode` — servers that refuse SETSTAT (chroot-only, managed SFTP)
+                // failed a complete upload and left it as `*.tlpart`, failing the same way on every retry.
                 if let Some(m) = mtime {
-                    s.set_mtime(path, m).await?;
+                    let _ = s.set_mtime(path, m).await;
                 }
                 if let Some(m) = mode {
                     let _ = s.chmod(path, m & 0o777).await;
