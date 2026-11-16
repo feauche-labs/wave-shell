@@ -185,18 +185,6 @@
 }
 
 /* Wave: folder colours — a line of the folder's colour along its rows, the folder name and icon tinted. */
-.tree .row.wave-lined::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: var(--wave-line-x);
-  width: 2px;
-  margin-left: -1px;
-  border-radius: 1px;
-  background: color-mix(in oklab, var(--wave-line) 70%, transparent);
-  pointer-events: none;
-}
 .tree .row.wave-tinted .label {
   color: color-mix(in oklab, var(--look-color) 70%, var(--text));
 }
@@ -205,4 +193,56 @@
 }
 .tree .row.sel.wave-tinted .label {
   color: inherit;
+}
+
+/* Wave: folder colours (variant 2): a coloured folder and its open contents as one tinted block, the
+   folder's row brighter; a coloured folder inside it is a block inside the block. Rows sit 30px apart,
+   so the layers reach over the gap between them. */
+.tree .row.wave-g {
+  isolation: isolate;
+  --gap: calc(var(--row-tree) - 30px);
+  --a0: 8%;
+  --a1: 10%;
+}
+.tree .row.wave-g::before,
+.tree .row.l1::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: var(--gap);
+  z-index: -1;
+  pointer-events: none;
+}
+.tree .row.wave-g::before {
+  left: 0;
+  right: 0;
+  background: color-mix(in oklab, var(--l0) var(--a0), transparent);
+}
+.tree .row.l1::after {
+  left: var(--l1-x);
+  right: 4px;
+  background: color-mix(in oklab, var(--l1) var(--a1), transparent);
+}
+.tree .row.l0-first::before,
+.tree .row.l1-first::after {
+  top: 2px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+.tree .row.l0-last::before,
+.tree .row.l1-last::after {
+  bottom: 2px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+/* The folder's own row: brighter. */
+.tree .row.wave-g.l0-first:not(.l1) {
+  --a0: 24%;
+}
+.tree .row.l1.l1-first {
+  --a1: 26%;
+}
+.tree:focus-within .row.sel.wave-g::before,
+.tree:focus-within .row.sel.l1::after {
+  display: none;
 }

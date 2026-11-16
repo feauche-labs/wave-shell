@@ -249,6 +249,7 @@ function seed() {
       ['locale', 'en'],
       ...(waveSeed
         ? ([
+            ['wave.folder_colors', { [ID.de]: 'blue', [ID.nl]: 'orange', [ID.deDb]: 'green' }],
             [
               'snippets.layout',
               {

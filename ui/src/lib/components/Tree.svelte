@@ -15,17 +15,41 @@
   const ROW = 30;
   const OVERSCAN = 8;
   const INDENT = 14;
-  /** Wave: a line of the nearest coloured ancestor folder, under that folder's chevron. */
-  function waveLine(parentId: string | null, depth: number): { hex: string; x: number } | null {
-    let id = parentId;
-    let d = depth - 1;
+  /**
+   * Wave: folder colours (showcase 16.11.2026, variant 2 «bright header»). A coloured folder and its open
+   * contents are one tinted block — the folder's own row brighter, the rows inside paler; a coloured folder
+   * inside it is a block inside the block (two layers at most: the outermost and the innermost).
+   */
+  /** Coloured folders a row sits in (the folder itself counts), outermost first, with their depth. */
+  function waveChain(row: Row | undefined): { id: string; hex: string; depth: number }[] {
+    if (!row) return [];
+    const out: { id: string; hex: string }[] = [];
+    let id: string | null = row.kind === 'folder' ? row.id : row.parentId;
     while (id) {
       const hex = folderColors.hex(id);
-      if (hex) return { hex, x: 8 + d * INDENT + 8 };
+      if (hex) out.push({ id, hex });
       id = tree.folder(id)?.parent_id ?? null;
-      d -= 1;
     }
-    return null;
+    out.reverse();
+    return out.map((g) => {
+      let depth = 0;
+      for (let p = tree.folder(g.id)?.parent_id ?? null; p; p = tree.folder(p)?.parent_id ?? null)
+        depth++;
+      return { ...g, depth };
+    });
+  }
+  /** Layer `n` (0 = outermost coloured folder, 1 = the innermost one inside it) of row `i`. */
+  function waveLayer(i: number, n: 0 | 1) {
+    const chain = waveChain(rows[i]);
+    if (chain.length < n + 1) return null;
+    const g = n === 0 ? chain[0]! : chain[chain.length - 1]!;
+    const has = (j: number) => waveChain(rows[j]).some((c) => c.id === g.id);
+    return {
+      hex: g.hex,
+      x: n === 0 ? 0 : 4 + g.depth * INDENT,
+      first: !has(i - 1),
+      last: !has(i + 1)
+    };
   }
 
   let scroller = $state<HTMLDivElement>();
@@ -325,7 +349,8 @@
         {#each visible as row, n (row.key)}
           {@const i = start + n}
           {@const sel = tree.selected.has(row.key)}
-          {@const line = waveLine(row.parentId, row.depth)}
+          {@const l0 = waveLayer(i, 0)}
+          {@const l1 = waveLayer(i, 1)}
           {@const own = row.kind === 'folder' ? folderColors.hex(row.id) : null}
           <div
             id={'ti-' + row.key}
@@ -341,10 +366,16 @@
             aria-expanded={row.kind === 'folder' ? row.expanded : undefined}
             style:top="{i * ROW}px"
             style:padding-left="{8 + row.depth * INDENT}px"
-            class:wave-lined={!!line}
+            class:wave-g={!!l0}
+            class:l0-first={l0?.first}
+            class:l0-last={l0?.last}
+            class:l1={!!l1}
+            class:l1-first={l1?.first}
+            class:l1-last={l1?.last}
+            style:--l0={l0?.hex}
+            style:--l1={l1?.hex}
+            style:--l1-x={l1 ? l1.x + 'px' : undefined}
             class:wave-tinted={!!own}
-            style:--wave-line={line?.hex}
-            style:--wave-line-x={line ? line.x + 'px' : undefined}
             style:--look-color={own ?? undefined}
             onclick={(e) => onRowClick(e, row)}
             ondblclick={() => row.kind === 'host' && connectHost(row.id)}
