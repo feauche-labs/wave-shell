@@ -15,8 +15,8 @@ use crate::auth::authenticate;
 use crate::config::{ConnectStep, Hop, Prompter};
 use crate::error::map_russh;
 use crate::forward::RemoteMap;
-use crate::hostkey::KnownHosts;
-use crate::policy::client_config;
+use crate::hostkey::{host_pattern, KnownHosts};
+use crate::policy::client_config_for;
 use crate::session::Connection;
 use crate::verify::{ClientHandler, CloseSlot, VerifyCtx, VerifyReq};
 use crate::SshError;
@@ -129,7 +129,14 @@ where
         prompter,
         error: None,
     };
-    let cfg = client_config(hop.keepalive_s, hop.legacy_algorithms);
+    // Wave: ask for the key types already trusted for this server first (see `prefer_known_host_keys`).
+    let known_types: Vec<String> = known
+        .lookup(&host_pattern(&hop.host, hop.port))
+        .unwrap_or_default()
+        .into_iter()
+        .map(|k| k.key_type)
+        .collect();
+    let cfg = client_config_for(hop.keepalive_s, hop.legacy_algorithms, &known_types);
     prompter.progress(&hop.label, ConnectStep::Handshake);
     let connected = drive(
         client::connect_stream(cfg, stream, handler),

@@ -93,12 +93,46 @@ pub fn preferred(legacy: bool) -> Preferred {
     }
 }
 
+/// Wave: puts the host key algorithms of the types already trusted for this server first (stable),
+/// as OpenSSH does. Otherwise a server that gains a new key type (Ed25519 next to an old RSA/ECDSA
+/// key) answers with the new one and the strict check reports a «changed» key with no way past it.
+/// `known` are `PublicKey::algorithm()` names (`ssh-rsa` for any RSA key, `ssh-ed25519`, …).
+#[must_use]
+pub fn prefer_known_host_keys(mut p: Preferred, known: &[String]) -> Preferred {
+    if known.is_empty() {
+        return p;
+    }
+    let family = |a: &Algorithm| match a {
+        Algorithm::Rsa { .. } => "ssh-rsa".to_owned(),
+        other => other.as_str().to_owned(),
+    };
+    let (mut first, rest): (Vec<_>, Vec<_>) = p
+        .key
+        .iter()
+        .cloned()
+        .partition(|a| known.contains(&family(a)));
+    first.extend(rest);
+    p.key = Cow::Owned(first);
+    p
+}
+
 /// Client config for one hop. `keepalive_s == 0` disables keepalives; otherwise 3 unanswered
 /// keepalives close the connection.
 #[must_use]
 pub fn client_config(keepalive_s: u32, legacy: bool) -> Arc<Config> {
+    client_config_for(keepalive_s, legacy, &[])
+}
+
+/// Wave: [`client_config`] with the key types already trusted for this server asked for first
+/// ([`prefer_known_host_keys`]).
+#[must_use]
+pub fn client_config_for(
+    keepalive_s: u32,
+    legacy: bool,
+    known_key_types: &[String],
+) -> Arc<Config> {
     Arc::new(Config {
-        preferred: preferred(legacy),
+        preferred: prefer_known_host_keys(preferred(legacy), known_key_types),
         keepalive_interval: (keepalive_s > 0).then(|| Duration::from_secs(u64::from(keepalive_s))),
         keepalive_max: 3,
         nodelay: true,
@@ -112,6 +146,25 @@ mod tests {
 
     fn names<'a>(v: impl IntoIterator<Item = &'a str>) -> Vec<String> {
         v.into_iter().map(str::to_owned).collect()
+    }
+
+    #[test]
+    fn wave_known_key_types_go_first() {
+        let order = |known: &[&str]| {
+            let known: Vec<String> = known.iter().map(|s| (*s).to_owned()).collect();
+            names(
+                prefer_known_host_keys(preferred(false), &known)
+                    .key
+                    .iter()
+                    .map(Algorithm::as_str),
+            )
+        };
+        assert_eq!(order(&[])[0], "ssh-ed25519");
+        let rsa = order(&["ssh-rsa"]);
+        assert_eq!(&rsa[..2], ["rsa-sha2-512", "rsa-sha2-256"]);
+        assert_eq!(rsa[2], "ssh-ed25519", "the rest keeps its order");
+        assert_eq!(order(&["ecdsa-sha2-nistp256"])[0], "ecdsa-sha2-nistp256");
+        assert_eq!(order(&["ssh-ed25519", "ssh-rsa"]).len(), HOST_KEYS.len());
     }
 
     #[test]
