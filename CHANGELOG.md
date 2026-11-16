@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/feauche-labs/wave-shell/compare/v1.2.0...v1.3.0) (2026-11-16)
+
+
+### Добавлено
+
+* адреса и трафик по адресам в «Состоянии», поиск по тегам ([6f3e80f](https://github.com/feauche-labs/wave-shell/commit/6f3e80f6425cf7ca34f032a469ac24603452f1e9))
+* разделение экрана как в Termius — перетащите вкладку на терминал, панели с размером, развернуть, вернуть во вкладку; вкладка больше не вылетает в отдельное окно ([69a7a1f](https://github.com/feauche-labs/wave-shell/commit/69a7a1f57bad2b3b8d7ebbcfba3fba339439716c))
+
 ## [1.2.0](https://github.com/feauche-labs/wave-shell/compare/v1.1.0...v1.2.0) (2026-11-15)
 
 
