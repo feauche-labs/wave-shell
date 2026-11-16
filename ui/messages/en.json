@@ -939,5 +939,8 @@
   "wave_look_more": "Choose…",
   "wave_color_field": "Colour",
   "wave_color_hint": "Optional. A line of this colour runs along the folder hosts in the list on the left; the name is tinted.",
-  "wave_color_none": "No colour"
+  "wave_color_none": "No colour",
+  "menu_return_to_main": "Move to main window",
+  "tab_drop_new_window": "New window",
+  "tab_drop_return_hint": "Drop outside to return it to the tabs"
 }

@@ -939,5 +939,8 @@
   "wave_look_more": "Выбрать…",
   "wave_color_field": "Цвет",
   "wave_color_hint": "Необязательно. Линия этого цвета тянется вдоль хостов папки в списке слева, название подкрашено.",
-  "wave_color_none": "Без цвета"
+  "wave_color_none": "Без цвета",
+  "menu_return_to_main": "Вернуть в главное окно",
+  "tab_drop_new_window": "Новое окно",
+  "tab_drop_return_hint": "Отпустите за окном — вернётся во вкладки"
 }

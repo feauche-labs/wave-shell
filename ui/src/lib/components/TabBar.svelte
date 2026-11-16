@@ -2,6 +2,7 @@
   import { edge } from '$lib/util/scroll-edge.svelte';
   import {
     CopyPlus,
+    SquareArrowOutUpLeft,
     FolderOpen,
     Gauge,
     LayoutGrid,
@@ -20,7 +21,7 @@
   import { ui } from '$lib/stores/ui.svelte';
   import { mod } from '$lib/util/platform';
   import WindowControls from './WindowControls.svelte';
-  import { isHostWindow } from './host-window';
+  import { canReturnToMain, isHostWindow, returnToMain } from './host-window';
   import TabMenu from './TabMenu.svelte';
   import { TabDrag } from './tab-drag.svelte';
   import { waveSplit } from '$lib/wave/split.svelte';
@@ -231,6 +232,16 @@
           aria-label={m.menu_connect_another()}
           title="{m.menu_connect_another()} ({mod('⇧T').replace('Ctrl+⇧', 'Ctrl+Shift+')})"
           ><CopyPlus size={16} /></button
+        >
+      {/if}
+      <!-- upstream 2.0.2: a host window gives its tab back to the main window -->
+      {#if canReturnToMain && sessions.activeGroup}
+        {@const key = sessions.activeGroup}
+        <button
+          class="icon-btn"
+          onclick={() => void returnToMain(key)}
+          aria-label={m.menu_return_to_main()}
+          title={m.menu_return_to_main()}><SquareArrowOutUpLeft size={16} /></button
         >
       {/if}
       {#if active.kind === 'terminal' && !active.local}
