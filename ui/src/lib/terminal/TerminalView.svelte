@@ -290,11 +290,15 @@
     refit();
   });
 
+  // Wave: in a split workspace every pane is "active" (visible); only the selected one takes the keyboard,
+  // otherwise the pane mounted last grabbed focus while another one was highlighted.
+  const selected = $derived(sessions.activeId === tab.id);
   $effect(() => {
     if (!active || !engine) return;
+    const take = selected;
     void tick().then(() => {
       refit();
-      if (!modalOpen && !searchOpen) engine?.term.focus();
+      if (take && !modalOpen && !searchOpen) engine?.term.focus();
     });
   });
 
