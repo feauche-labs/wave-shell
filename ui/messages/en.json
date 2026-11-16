@@ -942,5 +942,6 @@
   "wave_color_none": "No colour",
   "menu_return_to_main": "Move to main window",
   "tab_drop_new_window": "New window",
-  "tab_drop_return_hint": "Drop outside to return it to the tabs"
+  "tab_drop_return_hint": "Drop outside to return it to the tabs",
+  "wave_sftp_tab_closed": "The Files tab of this server was closed — open it and start the transfer again"
 }

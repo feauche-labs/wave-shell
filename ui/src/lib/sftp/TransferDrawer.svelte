@@ -20,7 +20,7 @@
       case 'failed':
         return t.error ?? m.sftp_t_failed();
       case 'cancelled':
-        return m.sftp_t_cancelled();
+        return t.dead ? (t.error ?? m.sftp_t_cancelled()) : m.sftp_t_cancelled(); // Wave
       default:
         return [
           `${formatSize(t.done)} / ${formatSize(t.total)}`,
@@ -75,7 +75,7 @@
                   aria-label={m.sftp_resume_t()}
                   onclick={() => transfers.resume(t.id)}><Play size={14} /></button
                 >
-              {:else if t.state === 'failed' || t.state === 'cancelled'}
+              {:else if (t.state === 'failed' || t.state === 'cancelled') && !t.dead}
                 <button
                   class="icon-btn"
                   title={m.sftp_retry()}

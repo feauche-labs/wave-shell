@@ -121,6 +121,8 @@ pub async fn sftp_close(
         })
         .ok_or(ApiError::NotFound)?;
     state.pending.cancel_owner(sftp_id.0);
+    // Wave: its transfers end as «Cancelled» (also the ones waiting on a prompt) and cannot be retried.
+    state.transfers.engine.cancel_using(&h.sftp);
     h.sftp.close().await;
     Ok(())
 }

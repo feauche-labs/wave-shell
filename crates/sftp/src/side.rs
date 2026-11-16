@@ -68,6 +68,11 @@ async fn blocking<T: Send + 'static>(
 }
 
 impl Side {
+    /// Wave: this side is the SFTP session `s`.
+    pub(crate) fn uses(&self, s: &Arc<Sftp>) -> bool {
+        matches!(self, Self::Remote(x) if Arc::ptr_eq(x, s))
+    }
+
     pub(crate) fn is_local(&self) -> bool {
         matches!(self, Self::Local)
     }

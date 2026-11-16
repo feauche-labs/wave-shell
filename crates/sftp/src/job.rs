@@ -47,6 +47,8 @@ pub(crate) struct Job {
     pub dst_dir: String,
     pub policy: ConflictPolicy,
     pub ctl: Mutex<Ctl>,
+    /// Wave: its SFTP session was closed (the Files tab went away) — cancelled, cannot be retried.
+    pub orphaned: AtomicBool,
     /// Wave: shared by all transfers of one enqueue — «apply to all» covers every selected item.
     pub apply_all: Arc<Mutex<Option<ConflictChoice>>>,
     pub decisions: Mutex<HashMap<String, ConflictChoice>>,

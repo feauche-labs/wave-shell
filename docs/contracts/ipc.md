@@ -176,7 +176,7 @@ pub enum ApiError {
 | `transfer_pause` | `id: TransferId` | `null` |
 | `transfer_resume` | `id: TransferId` | `null` |
 | `transfer_cancel` | `id: TransferId` | `null` |
-| `transfer_retry` | `id: TransferId` | `null` |
+| `transfer_retry` | `id: TransferId` | `null` Wave: refused with `Cancelled` when the transfer's Files tab (SFTP session) was closed — `sftp_close` cancels its transfers. |
 | `transfer_conflict_reply` | `pending_id: ConflictId, choice: ConflictChoice, apply_to_all: bool` | `null` |
 | `transfers_subscribe` | `on_event: Channel<TransferEvent>` (replaces previous subscriber for the calling window) | `null` |
 

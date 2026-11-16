@@ -114,6 +114,8 @@ pub(crate) fn cleanup(window: &tauri::Window) {
             == label
     }) {
         state.pending.cancel_owner(id.0);
+        // Wave: the window's Files tabs go away — their transfers are cancelled (see `sftp_close`).
+        state.transfers.engine.cancel_using(&handle.sftp);
         tauri::async_runtime::spawn(async move { handle.sftp.close().await });
     }
 }

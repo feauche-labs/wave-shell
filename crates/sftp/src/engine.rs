@@ -12,7 +12,8 @@ use crate::job::{drive, Ctl, Job, Status};
 use crate::scan::{base_name, dst_name};
 use crate::side::Side;
 use crate::{
-    ConflictChoice, ConflictId, SftpError, TransferConfig, TransferEvent, TransferId, TransferJob,
+    ConflictChoice, ConflictId, Sftp, SftpError, TransferConfig, TransferEvent, TransferId,
+    TransferJob,
 };
 
 pub(crate) type Reply = (ConflictChoice, bool);
@@ -110,6 +111,7 @@ impl TransferEngine {
                     active: true,
                 }),
                 apply_all: Arc::clone(&batch),
+                orphaned: AtomicBool::new(false),
                 decisions: Mutex::new(HashMap::new()),
                 done: Mutex::new(HashSet::new()),
                 gate: tokio::sync::Mutex::new(()),
@@ -148,6 +150,10 @@ impl TransferEngine {
 
     fn restart(&self, id: TransferId, from: &[Status]) -> Result<(), SftpError> {
         let j = self.job(id)?;
+        if j.orphaned.load(std::sync::atomic::Ordering::Relaxed) {
+            // Wave: its session is gone; the bridge says so (`Cancelled` from a retry = «the tab was closed»).
+            return Err(SftpError::Cancelled);
+        }
         let mut c = lk(&j.ctl);
         if !from.contains(&c.status) {
             return Err(SftpError::Protocol("transfer cannot be resumed now".into()));
@@ -180,6 +186,23 @@ impl TransferEngine {
             self.shared.emit(TransferEvent::Cancelled { id });
         }
         Ok(())
+    }
+
+    /// Wave: the SFTP session `sftp` is closing — cancels every transfer that reads from or writes to it
+    /// (including ones waiting on a conflict prompt) and marks them so a retry is refused instead of
+    /// failing on the dead session forever.
+    pub fn cancel_using(&self, sftp: &Arc<Sftp>) {
+        let ids: Vec<TransferId> = lk(&self.shared.jobs)
+            .values()
+            .filter(|j| j.src.uses(sftp) || j.dst.uses(sftp))
+            .map(|j| {
+                j.orphaned.store(true, std::sync::atomic::Ordering::Relaxed);
+                j.id
+            })
+            .collect();
+        for id in ids {
+            let _ = self.cancel(id);
+        }
     }
 
     /// Retries a failed/cancelled transfer.

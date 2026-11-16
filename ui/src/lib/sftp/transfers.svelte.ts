@@ -9,6 +9,8 @@ import {
   type TransferEvent
 } from '$lib/api';
 import { ema, etaSeconds } from './model';
+import * as m from '$lib/paraglide/messages.js';
+import { errorText } from '$lib/util/errors';
 
 export type TransferState =
   'queued' | 'running' | 'paused' | 'conflict' | 'done' | 'failed' | 'cancelled';
@@ -24,6 +26,8 @@ export interface TransferItem {
   state: TransferState;
   skipped: boolean;
   error: string | null;
+  /** Wave: its Files tab was closed — the session is gone, it cannot be retried. */
+  dead?: boolean;
 }
 
 export interface PendingConflict {
@@ -157,8 +161,17 @@ class TransfersStore {
   resume = (id: string) => api.transferResume(id);
   cancel = (id: string) => api.transferCancel(id);
   retry = async (id: string) => {
+    const before = this.items.find((t) => t.id === id);
     this.#patch(id, () => ({ state: 'queued', done: 0, error: null }));
-    await api.transferRetry(id);
+    const r = await api.transferRetry(id);
+    // Wave: a refused retry used to leave the row «queued» forever. `Cancelled` = its Files tab was closed.
+    if (r.status === 'error')
+      this.#patch(id, () => ({
+        state: before?.state ?? 'cancelled',
+        done: before?.done ?? 0,
+        error: r.error.code === 'Cancelled' ? m.wave_sftp_tab_closed() : errorText(r.error),
+        dead: r.error.code === 'Cancelled'
+      }));
   };
 
   async reply(
