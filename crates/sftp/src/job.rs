@@ -278,10 +278,17 @@ async fn resolve(ctx: &Ctx<'_>, t: &FileTask, final_path: &str) -> Result<Action
             }
             _ => {
                 let all = *lk(&job.apply_all);
-                if let Some(c) = all {
-                    c
+                let (c, via_all) = match all {
+                    Some(c) => (c, true),
+                    None => ask(ctx, t, final_path, &ex, false).await?,
+                };
+                // Wave: «Resume» for all fits only a smaller start of the source; a destination as big or
+                // bigger is another file of the same name — ask about it instead of overwriting it.
+                let fits = ex.kind == EntryKind::File && ex.size < t.size;
+                if via_all && c == ConflictChoice::Resume && !fits {
+                    ask(ctx, t, final_path, &ex, true).await?.0
                 } else {
-                    ask(ctx, t, final_path, &ex).await?
+                    c
                 }
             }
         };
@@ -419,20 +426,23 @@ async fn free_name(sh: &Shared, job: &Job, t: &FileTask) -> Result<String, SftpE
     }
 }
 
+/// Asks the user; returns the choice and whether it came as «for all» (Wave). With `own` the shared «for all»
+/// answer is not taken — this file needs an answer of its own.
 async fn ask(
     ctx: &Ctx<'_>,
     t: &FileTask,
     final_path: &str,
     ex: &crate::Entry,
-) -> Result<ConflictChoice, SftpError> {
+    own: bool,
+) -> Result<(ConflictChoice, bool), SftpError> {
     let pending_id = ConflictId(Uuid::now_v7());
     let (tx, rx) = tokio::sync::oneshot::channel();
     {
         // Wave: «apply to all» may have been given in a sibling transfer since this one decided to ask; the
         // check and the registration happen under the same lock `conflict_reply` holds while answering.
         let mut pending = lk(&ctx.sh.pending);
-        if let Some(c) = *lk(&ctx.job.apply_all) {
-            return Ok(c);
+        if let Some(c) = (*lk(&ctx.job.apply_all)).filter(|_| !own) {
+            return Ok((c, true));
         }
         pending.insert(pending_id, (tx, Arc::clone(&ctx.job.apply_all)));
     }
@@ -459,7 +469,7 @@ async fn ask(
             }
             // Wave: the prompt is closed (answered here or by «apply to all» in a sibling transfer).
             ctx.sh.emit(TransferEvent::ConflictResolved { id: ctx.job.id, pending_id });
-            Ok(c)
+            Ok((c, all))
         }
     }
 }
