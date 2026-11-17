@@ -52,6 +52,21 @@
   const windowControls = native && !isApple && !/Android/.test(navigator.userAgent);
   let narrow = $state(false);
 
+  // Wave: the system window buttons follow the left menu (like in Arc): shown with it, hidden with it — after
+  // it has slid away. Back on when the shell goes (lock screen).
+  $effect(() => {
+    if (!mac || isHostWindow) return;
+    const show = ui.sidebarOpen || wavePeek.open;
+    const t = setTimeout(
+      () => void api.waveWindowButtons(show).catch(() => undefined),
+      show ? 0 : 180
+    );
+    return () => clearTimeout(t);
+  });
+  onMount(() => () => {
+    if (mac && !isHostWindow) void api.waveWindowButtons(true).catch(() => undefined);
+  });
+
   // Wave: the app items of the macOS menu bar (texts: +layout) do what the same buttons and keys do.
   $effect(() => {
     if (!mac) return;
@@ -260,7 +275,12 @@
     {/if}
   {/if}
   <div class="main">
-    <TabBar mac={mac && (isHostWindow || !ui.sidebarOpen || narrow)} {windowControls} />
+    <!-- Wave: in the main window the system buttons hide with the menu, so the bar needs no room for them. -->
+    <TabBar
+      mac={mac && isHostWindow}
+      {windowControls}
+      sideShown={!isHostWindow && ui.sidebarOpen && !narrow}
+    />
     <main class="content" class:fade={edge.scrolled && edge.fade}>{@render children()}</main>
   </div>
 </div>

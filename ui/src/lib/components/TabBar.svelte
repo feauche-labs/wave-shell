@@ -11,6 +11,7 @@
     PanelLeftOpen,
     PanelRight,
     Plus,
+    Search,
     SquareTerminal,
     X
   } from '@lucide/svelte';
@@ -26,8 +27,16 @@
   import { TabDrag } from './tab-drag.svelte';
   import { waveSplit } from '$lib/wave/split.svelte';
 
-  let { mac = false, windowControls = false }: { mac?: boolean; windowControls?: boolean } =
-    $props();
+  let {
+    mac = false,
+    windowControls = false,
+    sideShown = false
+  }: {
+    mac?: boolean;
+    windowControls?: boolean;
+    /** Wave: the left menu is open beside the bar — its own header has the menu button then. */
+    sideShown?: boolean;
+  } = $props();
 
   const active = $derived(sessions.active);
   /** Servers connected for monitoring that have no tab. */
@@ -77,7 +86,7 @@
   class:edge={edge.scrolled || (active && active.kind !== 'status')}
   data-tauri-drag-region
 >
-  {#if !isHostWindow}
+  {#if !isHostWindow && !sideShown}
     <button
       class="icon-btn side-toggle"
       onclick={() => (ui.sidebarOpen = !ui.sidebarOpen)}
@@ -97,6 +106,15 @@
         title={m.dash_title()}><LayoutGrid size={16} /></button
       >
     {/if}
+  {/if}
+  {#if !isHostWindow}
+    <!-- Wave: search left the menu for the top bar (like in Arc); ⌘K as before. -->
+    <button
+      class="icon-btn"
+      onclick={() => (ui.paletteOpen = true)}
+      aria-label={m.sidebar_search()}
+      title="{m.sidebar_search()} ({mod('K')})"><Search size={16} /></button
+    >
     <span class="sep" aria-hidden="true"></span>
   {/if}
   {#if isHostWindow}

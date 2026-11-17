@@ -981,5 +981,6 @@
   "wave_menu_minimize": "Свернуть",
   "wave_menu_zoom": "Изменить масштаб окна",
   "wave_menu_help": "Справка",
-  "wave_menu_project_page": "Страница проекта на GitHub"
+  "wave_menu_project_page": "Страница проекта на GitHub",
+  "wave_sidebar_pin": "Закрепить меню"
 }

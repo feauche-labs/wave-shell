@@ -264,6 +264,9 @@ export const appMenuSet: Commands['appMenuSet'] = async (labels) => {
   return ok(null);
 };
 
+/** Wave: the demo has no system window buttons. */
+export const waveWindowButtons: Commands['waveWindowButtons'] = async () => ok(null);
+
 /** The last menu the UI sent, for tests and the dev console. */
 export let lastTray: TrayMenu | null = null;
 export const traySet: Commands['traySet'] = async (menu) => {

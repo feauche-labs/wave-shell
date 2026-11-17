@@ -223,6 +223,7 @@ pub enum ApiError {
 |---|---|---|
 | `tray_set` | `menu: TrayMenu\|null` | `null` — shows/updates the menu-bar icon (`TrayMenu { tooltip, items: TrayItem[] (≤ 24), open_label, quit_label }`, `TrayItem { host_id: HostId\|null, text }`); `null` removes it. Strings are rendered as native menu text, control chars stripped, ≤ 120 chars. Vault lock drops the server lines on the backend side. Passive. ADR-013. |
 | `app_menu_set` | `labels: AppMenuLabels` | `null` — Wave: sets the macOS menu bar (Wave Shell / File / Edit / View / Window / Help) with the texts the UI sends in its language; standard items stay native, the app's own items come back as `app-menu://action`. Windows/Linux/mobile: nothing (no app menu bar). Control chars stripped, ≤ 80 chars. Passive. |
+| `wave_window_buttons` | `visible: bool` | `null` — Wave: shows/hides the macOS window buttons (close/minimise/zoom) of the calling window; the main window hides them with the left menu (like Arc). Elsewhere nothing. Passive. |
 | `app_info` | — | `AppInfo { version, platform, arch }` |
 | `open_external` | `url: string` (http/https only, validated) | `null` |
 | `app_notify` | `title: string, body: string` (desktop: system notification shown by the backend; control chars dropped, ≤ 120 / 300 chars; ADR-017) | `null` (`Unsupported` on mobile or when the OS refuses) |

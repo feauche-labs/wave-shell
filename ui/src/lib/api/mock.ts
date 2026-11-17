@@ -150,6 +150,7 @@ export const mockApi: Api = {
   certList: services.certList,
   traySet: services.traySet,
   appMenuSet: services.appMenuSet,
+  waveWindowButtons: services.waveWindowButtons,
   // app
   appInfo: vault.appInfo,
   openExternal: vault.openExternal,

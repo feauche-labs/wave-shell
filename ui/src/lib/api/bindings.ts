@@ -258,6 +258,8 @@ export const commands = {
 	 *  thread, where native menus live. Passive: the UI calls it at start, not the user.
 	 */
 	appMenuSet: (labels: AppMenuLabels) => typedError<null, ApiError>(__TAURI_INVOKE("app_menu_set", { labels })),
+	/**  Shows or hides the window buttons of the calling window (macOS; elsewhere nothing). Passive. */
+	waveWindowButtons: (visible: boolean) => typedError<null, ApiError>(__TAURI_INVOKE("wave_window_buttons", { visible })),
 	/**  Version / platform / arch. */
 	appInfo: () => typedError<AppInfo, ApiError>(__TAURI_INVOKE("app_info")),
 	/**  Opens an http/https URL in the system browser (validated). */

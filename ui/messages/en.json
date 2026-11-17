@@ -981,5 +981,6 @@
   "wave_menu_minimize": "Minimize",
   "wave_menu_zoom": "Zoom",
   "wave_menu_help": "Help",
-  "wave_menu_project_page": "Project Page on GitHub"
+  "wave_menu_project_page": "Project Page on GitHub",
+  "wave_sidebar_pin": "Keep the sidebar open"
 }

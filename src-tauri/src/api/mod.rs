@@ -38,6 +38,7 @@ pub const PASSIVE_COMMANDS: &[&str] = &[
     "cert_list",
     "tray_set",
     "app_menu_set",
+    "wave_window_buttons",
 ];
 
 /// The tauri-specta builder with every typed command and event of `docs/contracts/ipc.md`.
@@ -152,6 +153,7 @@ pub fn builder() -> Builder<tauri::Wry> {
         services::cert_list,
         app::tray_set,
         crate::wave::app_menu::app_menu_set,
+        crate::wave::window_buttons::wave_window_buttons,
         app::app_info,
         app::open_external,
         app::app_notify,

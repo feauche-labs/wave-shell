@@ -3,6 +3,7 @@
 pub(crate) mod app_menu;
 pub(crate) mod coalesce;
 pub(crate) mod net;
+pub(crate) mod window_buttons;
 
 /// The menu bar's app items (see `app_menu`); the tray's own items are ignored there.
 #[must_use]

@@ -43,6 +43,12 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 # ADR-018: private document copies.
 tempfile = "3"
+# Wave: the system window buttons follow the left menu (hidden with it, like in Arc). Safe calls only —
+# the window is found by address among NSApp's windows. Already in the tree through tao.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSArray", "NSEnumerator"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSApplication", "NSButton", "NSControl", "NSResponder", "NSView", "NSWindow"] }
 [target.'cfg(windows)'.dependencies]
 # ShellExecute expects ordinary Windows paths where possible.
 dunce = "1"

@@ -7,7 +7,8 @@
     LayoutGrid,
     Lock,
     Plus,
-    Search,
+    PanelLeftClose,
+    PanelLeftOpen,
     CircleArrowUp,
     ArrowDown,
     LoaderCircle,
@@ -114,9 +115,17 @@
 
 <aside class="side" aria-label={m.sidebar_hosts()}>
   <div class="top" class:mac data-tauri-drag-region>
-    <button class="search" onclick={() => (ui.paletteOpen = true)}>
-      <Search size={14} /><span>{m.sidebar_search()}</span><span class="kbd">{mod('K')}</span>
-    </button>
+    <!-- Wave: like in Arc — the header holds the window buttons (macOS) and the menu button; search moved to
+         the top bar (TabBar). Slid out, the button keeps the menu open. -->
+    <button
+      class="icon-btn side-toggle"
+      onclick={() => (ui.sidebarOpen = !ui.sidebarOpen)}
+      aria-label={ui.sidebarOpen ? m.sidebar_hide() : m.wave_sidebar_pin()}
+      title="{ui.sidebarOpen ? m.sidebar_hide() : m.wave_sidebar_pin()} ({mod('B')})"
+      >{#if ui.sidebarOpen}<PanelLeftClose size={16} />{:else}<PanelLeftOpen
+          size={16}
+        />{/if}</button
+    >
   </div>
   <nav aria-label={m.dash_title()}>
     {#each pages as pg (pg.id)}
@@ -246,33 +255,6 @@
   .top.mac {
     padding-left: 76px;
   }
-  .search {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    min-width: 0;
-    height: var(--control-h);
-    padding: 0 5px 0 8px;
-    border: 0;
-    border-radius: var(--r-control);
-    background: var(--fill-2);
-    color: var(--muted);
-    font: inherit;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: background-color 120ms var(--ease);
-  }
-  .search:hover {
-    background: color-mix(in oklab, var(--text) 10%, transparent);
-  }
-  .search span:first-of-type {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: left;
-  }
   nav {
     display: grid;
     gap: 1px;
@@ -363,12 +345,14 @@
     width: fit-content;
     max-width: calc(100% - 20px);
     height: 26px;
-    margin: 2px 10px 6px;
+    margin: 2px auto 6px;
     padding: 0 12px 0 9px;
     border: 0;
     border-radius: 13px;
     overflow: hidden;
-    background: var(--accent-soft);
+    /* Wave (showcase 17.11, variant 2): a thin outline; the fill comes only on hover. */
+    background: transparent;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent);
     color: var(--accent);
     font: inherit;
     font-size: var(--fs-sm);
@@ -378,7 +362,7 @@
     flex: none;
   }
   .update:hover {
-    background: color-mix(in oklab, var(--accent) 20%, transparent);
+    background: var(--accent-soft);
   }
   .update > :global(*) {
     position: relative;
