@@ -2364,7 +2364,7 @@ dependencies = [
 
 [[package]]
 name = "ibc-shell"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "dunce",
  "ibc-shell-sftp",
@@ -2397,14 +2397,14 @@ dependencies = [
 
 [[package]]
 name = "ibc-shell-geo"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "thiserror 2.0.21",
 ]
 
 [[package]]
 name = "ibc-shell-sftp"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "futures-util",
  "ibc-shell-ssh",
@@ -2423,7 +2423,7 @@ dependencies = [
 
 [[package]]
 name = "ibc-shell-ssh"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "bytes",
  "russh",
@@ -2437,7 +2437,7 @@ dependencies = [
 
 [[package]]
 name = "ibc-shell-store"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "rusqlite",
  "serde",
@@ -2449,7 +2449,7 @@ dependencies = [
 
 [[package]]
 name = "ibc-shell-vault"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "argon2 0.5.3",
  "chacha20poly1305",

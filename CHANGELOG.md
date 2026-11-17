@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.7.0](https://github.com/feauche-labs/wave-shell/compare/v1.6.1...v1.7.0) (2026-11-17)
+
+
+### Добавлено
+
+* кнопка обновления в левом меню стала пилюлей «Обновить до …» — с заполнением при скачивании ([96e40df](https://github.com/feauche-labs/wave-shell/commit/96e40df1df8df23f86d3b87bf5df998264e6c362))
+* меню как в Arc — кнопки окна в шапке левого меню и прячутся вместе с ним, поиск лупой в верхней панели; пилюля обновления по центру с обводкой ([8d383cc](https://github.com/feauche-labs/wave-shell/commit/8d383cc8ec205b417a215252697d81c4bb3af9a4))
+* своё меню вверху экрана на Маке — на языке интерфейса, с настройками, обновлениями, вкладками и масштабом ([6b7cc19](https://github.com/feauche-labs/wave-shell/commit/6b7cc19585fb177bbca0d3082ec850d9c2049b9e))
+
+
+### Исправлено
+
+* **ci:** меню Мака и кнопки окна больше не ломают проверку сборки на Linux и Windows ([ddee31f](https://github.com/feauche-labs/wave-shell/commit/ddee31feaefb07aa049a879889a8447f69f03047))
+
 ## [1.6.1](https://github.com/feauche-labs/wave-shell/compare/v1.6.0...v1.6.1) (2026-11-17)
 
 
