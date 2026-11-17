@@ -83,6 +83,11 @@ async fn tcp_connect<P: Prompter>(
     for a in addrs {
         let (err, failure) = match tokio::time::timeout(TCP_TIMEOUT, TcpStream::connect(a)).await {
             Ok(Ok(s)) => {
+                // Wave: send every keystroke at once. The config's `nodelay` is applied only by
+                // russh's own `connect`; this socket goes to `connect_stream`, so the system held each
+                // small packet until the previous one was acknowledged — +50–100 ms per key when
+                // typing faster than the round trip. A failure only costs speed.
+                let _ = s.set_nodelay(true);
                 prompter.attempt(label, &a.to_string(), None);
                 return Ok(s);
             }
@@ -328,6 +333,17 @@ mod tests {
                 "h:Connecting".to_owned(),
                 format!("h:127.0.0.1:{port}:ConnectionRefused"),
             ]
+        );
+    }
+
+    #[tokio::test]
+    async fn wave_the_ssh_socket_sends_small_packets_at_once() {
+        let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = l.local_addr().unwrap();
+        let s = tcp_connect(&[addr], "h", &NoPrompt).await.unwrap();
+        assert!(
+            s.nodelay().unwrap(),
+            "keystrokes would wait for the previous ACK"
         );
     }
 
