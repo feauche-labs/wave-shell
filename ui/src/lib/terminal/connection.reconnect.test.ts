@@ -40,9 +40,12 @@ vi.mock('$lib/api', () => {
   };
 });
 
+// Wave: imported once, outside the tests — loading the module on a slow Windows runner took longer than a
+// test's 5 s limit when it was done inside the first one.
+import { Connection } from './connection.svelte';
+
 describe('manual reconnect', () => {
   it('goes back to «disconnected» when the backend refuses', async () => {
-    const { Connection } = await import('./connection.svelte');
     const c = new Connection(
       { id: 't-1', hostId: 'h-1', label: 'srv' } as never,
       () => {},
@@ -59,7 +62,6 @@ describe('manual reconnect', () => {
 
   // Wave: keystrokes went out on the next animation frame (0–16 ms later, more when WebKit is late).
   it('sends a keystroke at once, merging what one event produced', async () => {
-    const { Connection } = await import('./connection.svelte');
     const c = new Connection(
       { id: 't-2', hostId: 'h-1', label: 'srv' } as never,
       () => {},

@@ -501,6 +501,11 @@ async fn conflict_policies() {
     // Ask with apply-to-all: a single prompt replaces both
     std::fs::write(out.join("a.txt"), "old").unwrap();
     std::fs::write(out.join("b.txt"), "old").unwrap();
+    // Wave: the files it collides with exist before the job starts — created after `enqueue`, a fast
+    // engine (CI) got there first, saw no conflict and never asked.
+    std::fs::create_dir_all(out.join("src")).unwrap();
+    std::fs::write(out.join("src/a.txt"), "old").unwrap();
+    std::fs::write(out.join("src/b.txt"), "old").unwrap();
     let ids = eng
         .enqueue(job(
             Endpoint::Remote(s.clone()),
@@ -511,9 +516,6 @@ async fn conflict_policies() {
         ))
         .unwrap();
     assert_eq!(ids.len(), 1);
-    std::fs::create_dir_all(out.join("src")).unwrap();
-    std::fs::write(out.join("src/a.txt"), "old").unwrap();
-    std::fs::write(out.join("src/b.txt"), "old").unwrap();
     let mut prompts = 0;
     loop {
         match rx.recv().await.unwrap() {
