@@ -9,6 +9,8 @@
     Plus,
     Search,
     CircleArrowUp,
+    ArrowDown,
+    LoaderCircle,
     Settings,
     ShieldCheck,
     SquareTerminal,
@@ -162,23 +164,33 @@
   <Tree />
   {#if waveUpdate.available || settings.update}
     {@const latest = waveUpdate.available ?? settings.update?.version ?? ''}
-    <!-- Wave: opens the update sheet (what is new → update and restart) instead of the GitHub page. -->
+    <!-- Wave: opens the update sheet (what is new → update and restart) instead of the GitHub page.
+         A soft pill (showcase 17.11, variant D); while downloading it fills from the left. -->
     <button
       type="button"
       class="update"
-      title={m.wave_update_open()}
+      title={waveUpdate.phase === 'downloading'
+        ? m.wave_update_downloading_short({
+            version: waveUpdate.version,
+            percent: String(waveUpdate.percent)
+          })
+        : waveUpdate.phase === 'installing'
+          ? m.wave_update_installing()
+          : `${m.update_available({ version: latest })} — ${m.wave_update_open()}`}
       onclick={() => void waveUpdate.show()}
     >
-      <CircleArrowUp size={14} /><span
-        >{waveUpdate.phase === 'downloading'
-          ? m.wave_update_downloading_short({
-              version: waveUpdate.version,
-              percent: String(waveUpdate.percent)
-            })
-          : waveUpdate.phase === 'installing'
-            ? m.wave_update_installing()
-            : m.update_available({ version: latest })}</span
-      >
+      {#if waveUpdate.phase === 'downloading'}
+        <span class="fill" style:width="{waveUpdate.percent}%"></span>
+        <ArrowDown size={13} strokeWidth={2.4} /><span class="t"
+          >{m.wave_update_pill_downloading({ percent: String(waveUpdate.percent) })}</span
+        >
+      {:else if waveUpdate.phase === 'installing'}
+        <LoaderCircle size={13} strokeWidth={2.4} class="spin" /><span class="t"
+          >{m.wave_update_pill_installing()}</span
+        >
+      {:else}
+        <CircleArrowUp size={14} /><span class="t">{m.wave_update_cta({ version: latest })}</span>
+      {/if}
     </button>
   {/if}
   <footer>
@@ -344,29 +356,54 @@
     color: var(--muted);
   }
   .update {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 7px;
-    margin: 0 8px 2px;
-    padding: 6px 8px;
+    gap: 6px;
+    width: fit-content;
+    max-width: calc(100% - 20px);
+    height: 26px;
+    margin: 2px 10px 6px;
+    padding: 0 12px 0 9px;
     border: 0;
-    border-radius: var(--r-inner);
-    background: transparent;
+    border-radius: 13px;
+    overflow: hidden;
+    background: var(--accent-soft);
     color: var(--accent);
     font: inherit;
     font-size: var(--fs-sm);
-    font-weight: 500;
-    text-align: left;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
     cursor: pointer;
+    flex: none;
   }
   .update:hover {
-    background: var(--hover);
+    background: color-mix(in oklab, var(--accent) 20%, transparent);
   }
-  .update span {
+  .update > :global(*) {
+    position: relative;
+    flex: none;
+  }
+  .update .fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: color-mix(in oklab, var(--accent) 22%, transparent);
+    transition: width 200ms;
+  }
+  .update .t {
+    flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .update :global(.spin) {
+    animation: wave-update-spin 0.9s linear infinite;
+  }
+  @keyframes wave-update-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
   footer {
     display: flex;
