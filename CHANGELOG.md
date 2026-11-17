@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.6.0](https://github.com/feauche-labs/wave-shell/compare/v1.5.0...v1.6.0) (2026-11-17)
+
+
+### Добавлено
+
+* масштаб интерфейса в основных настройках — 90–150 %, на Mac ⌘⇧+ / ⌘⇧− / ⌘⇧0 ([ae620bc](https://github.com/feauche-labs/wave-shell/commit/ae620bcdd5b3dc0e84abeb4cd0d645ca2a50916f))
+* цвет папки заливает её строку, а раскрытую папку — целиком вместе с хостами ([f7cf02c](https://github.com/feauche-labs/wave-shell/commit/f7cf02cb309ddad936ceeec9457a845f4681c2cf))
+
+
+### Исправлено
+
+* «Переподключиться» больше не зависает на «Подключение» — отказ возвращает вкладку в «Отключено» ([fafb197](https://github.com/feauche-labs/wave-shell/commit/fafb1979a8cad39110d6864380aa9755fe2541bb))
+* «продолжить для всех» больше не затирает другой файл с тем же именем — спрашивает про него отдельно ([75cc443](https://github.com/feauche-labs/wave-shell/commit/75cc443ca7995ecd3558b92973ea6a2fc1b32215))
+* два файла из одной очереди больше не записываются в один (одинаковые имена, Readme и README) ([5f251fd](https://github.com/feauche-labs/wave-shell/commit/5f251fd2d90cbf83b337fb9495a3a51ed41b81a8))
+* если докачать файл не удалось, он больше не пропадает из папки ([3033a44](https://github.com/feauche-labs/wave-shell/commit/3033a44cedcff836ae78a6a58ab27bcc6f0a5d92))
+* новый тип ключа у сервера больше не даёт ложную блокировку «ключ изменился» — сначала просим уже сохранённый тип ([5166486](https://github.com/feauche-labs/wave-shell/commit/51664866cfcdf845d0461534af607979091f00ca))
+* папка со значком или смайликом снова сохраняется — расширено ограничение длины в базе ([f1bc1fa](https://github.com/feauche-labs/wave-shell/commit/f1bc1fa95189710abc66018ae9bdfdcff6edbf69))
+* подсветка в терминале не замолкает после вставки текста — цвета отслеживаются по отдельности ([6c0c1e7](https://github.com/feauche-labs/wave-shell/commit/6c0c1e7485f405597e6992b6dae83db2e23fc341))
+* после закрытия вкладки «Файлы» её передачи честно отменяются, а не висят; «Повторить» объясняет, почему не может ([7bd3944](https://github.com/feauche-labs/wave-shell/commit/7bd3944280eb809969244de17a6486bb4e50e58f))
+* терминал не зависает при большом выводе — ввод уходит отдельно, а отстающий экран не тормозит «Состояние» и «Файлы» ([9f4ee8e](https://github.com/feauche-labs/wave-shell/commit/9f4ee8e42cf705356996c8325f184de5f31ea5e0))
+
+
+### Производительность
+
+* нажатия клавиш уходят на сервер сразу, а не на следующем кадре экрана — ввод быстрее и ровнее ([765f5db](https://github.com/feauche-labs/wave-shell/commit/765f5db59ebd0122a3612993ecd4724e24ecad02))
+
+
+### Тесты
+
+* тесты больше не зависят от локальных ключей и прав доступа Unix — CI на Linux и Windows снова проходит ([496d084](https://github.com/feauche-labs/wave-shell/commit/496d0843bb6f02ba0e563b8ebff3354af633031b))
+* тесты конфликтов файлов и переподключения больше не падают на быстрых и медленных машинах CI ([9dc6474](https://github.com/feauche-labs/wave-shell/commit/9dc64745226a45b9d23f2f4661a710d1eeb9b87f))
+
 ## [1.5.0](https://github.com/feauche-labs/wave-shell/compare/v1.4.0...v1.5.0) (2026-11-16)
 
 
