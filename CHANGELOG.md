@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/feauche-labs/wave-shell/compare/v1.6.0...v1.6.1) (2026-11-17)
+
+
+### Производительность
+
+* клавиши уходят на сервер сразу, без ожидания подтверждения предыдущей — при быстром наборе на 50–100 мс быстрее ([01f2275](https://github.com/feauche-labs/wave-shell/commit/01f2275195c8e7fee04dd64874f032122e43108d))
+
 ## [1.6.0](https://github.com/feauche-labs/wave-shell/compare/v1.5.0...v1.6.0) (2026-11-17)
 
 
