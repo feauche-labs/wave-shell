@@ -5,6 +5,7 @@
 import type { commands } from './bindings';
 import type {
   ApiError,
+  AppMenuPicked,
   HostWindowReturn,
   SessionId,
   TrayOpenHost,
@@ -37,6 +38,7 @@ export interface EventPayloads {
   updateAvailable: UpdateAvailable;
   trayOpenHost: TrayOpenHost;
   hostWindowReturn: HostWindowReturn;
+  appMenuAction: AppMenuPicked;
 }
 
 /** Global event subscription, identical for mock and real. Returns an unsubscribe function. */

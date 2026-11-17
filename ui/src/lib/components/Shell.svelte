@@ -1,8 +1,10 @@
 <script lang="ts">
   import { scaleKey, uiScale } from '$lib/wave/ui-scale.svelte';
   import { isTauri } from '@tauri-apps/api/core';
+  import { getCurrentWindow } from '@tauri-apps/api/window';
   import { onMount, untrack, type Snippet } from 'svelte';
-  import { api } from '$lib/api';
+  import { api, type AppMenuAction } from '$lib/api';
+  import { onMenuAction, PROJECT_PAGE } from '$lib/wave/app-menu';
   import { closeServer, connectAnother } from '$lib/stores/actions';
   import * as m from '$lib/paraglide/messages.js';
   import { reachability } from '$lib/fleet/reachability.svelte';
@@ -49,6 +51,35 @@
   const mac = native && isMac;
   const windowControls = native && !isApple && !/Android/.test(navigator.userAgent);
   let narrow = $state(false);
+
+  // Wave: the app items of the macOS menu bar (texts: +layout) do what the same buttons and keys do.
+  $effect(() => {
+    if (!mac) return;
+    const off = onMenuAction(getCurrentWindow().label, runMenu);
+    return () => void off.then((stop) => stop());
+  });
+  function runMenu(action: AppMenuAction) {
+    const main = !isHostWindow;
+    if (action === 'check_update') void waveUpdate.show();
+    else if (action === 'settings') ui.settingsOpen = true;
+    else if (action === 'hotkeys') ui.hotkeysOpen = true;
+    else if (action === 'project_page') void api.openExternal(PROJECT_PAGE);
+    else if (action === 'scale_in') uiScale.key(1);
+    else if (action === 'scale_out') uiScale.key(-1);
+    else if (action === 'scale_reset') uiScale.key(0);
+    else if (action === 'close_tab') {
+      // ⌘W closed the window when there was no tab to close (the system menu did it) — still does.
+      if (main && sessions.activeGroup) closeServer(sessions.activeGroup);
+      else void getCurrentWindow().close();
+    } else if (!main) return;
+    else if (action === 'keys') {
+      ui.page = 'keys';
+      sessions.activeId = null;
+    } else if (action === 'new_tab') ui.paletteOpen = true;
+    else if (action === 'local_terminal') sessions.openLocal(m.local_terminal());
+    else if (action === 'new_host') ui.openHostEditor(null);
+    else if (action === 'toggle_sidebar') ui.sidebarOpen = !ui.sidebarOpen;
+  }
 
   onMount(() => {
     void api.appInfo().then((r) => {

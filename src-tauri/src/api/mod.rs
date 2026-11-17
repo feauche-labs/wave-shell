@@ -37,6 +37,7 @@ pub const PASSIVE_COMMANDS: &[&str] = &[
     "docker_events",
     "cert_list",
     "tray_set",
+    "app_menu_set",
 ];
 
 /// The tauri-specta builder with every typed command and event of `docs/contracts/ipc.md`.
@@ -150,6 +151,7 @@ pub fn builder() -> Builder<tauri::Wry> {
         services::docker_events,
         services::cert_list,
         app::tray_set,
+        crate::wave::app_menu::app_menu_set,
         app::app_info,
         app::open_external,
         app::app_notify,
@@ -167,7 +169,8 @@ fn configure(builder: Builder<tauri::Wry>) -> Builder<tauri::Wry> {
             events::TreeChanged,
             events::UpdateAvailable,
             events::TrayOpenHost,
-            events::HostWindowReturn
+            events::HostWindowReturn,
+            crate::wave::app_menu::AppMenuPicked
         ])
 }
 

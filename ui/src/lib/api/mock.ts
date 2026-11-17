@@ -149,6 +149,7 @@ export const mockApi: Api = {
   dockerEvents: services.dockerEvents,
   certList: services.certList,
   traySet: services.traySet,
+  appMenuSet: services.appMenuSet,
   // app
   appInfo: vault.appInfo,
   openExternal: vault.openExternal,

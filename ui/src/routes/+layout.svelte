@@ -2,6 +2,9 @@
   import '../app.css';
   import '$lib/forms.css';
   import { onMount } from 'svelte';
+  import { isTauri } from '@tauri-apps/api/core';
+  import { isMac } from '$lib/util/platform';
+  import { sendMenu } from '$lib/wave/app-menu';
   import { transfers } from '$lib/sftp/transfers.svelte';
   import { receiveWindowTransfer } from '$lib/stores/window-transfer';
   import { ui } from '$lib/stores/ui.svelte';
@@ -32,6 +35,8 @@
   onMount(() => {
     void vault.refresh();
     if (isHostWindow) return;
+    // Wave: the macOS menu bar in the app's language from the first screen (the lock screen too).
+    if (isTauri() && isMac) sendMenu();
     const off = onTrayOpen((id) => {
       if (vault.state === 'Unlocked') connectHost(id, 'status');
     });

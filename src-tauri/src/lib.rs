@@ -63,7 +63,7 @@ pub fn run() {
     let typed = specta.invoke_handler();
     let raw: Box<dyn Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Send + Sync> =
         Box::new(tauri::generate_handler![commands::session::shell_write]);
-    let app = wave::with_updater(tauri::Builder::default())
+    let app = wave::with_app_menu(wave::with_updater(tauri::Builder::default()))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(move |invoke| {

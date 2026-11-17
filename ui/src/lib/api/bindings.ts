@@ -253,6 +253,11 @@ export const commands = {
 	 *  Sync on purpose: runs on the main thread, where native menus live.
 	 */
 	traySet: (menu: TrayMenu | null) => typedError<null, ApiError>(__TAURI_INVOKE("tray_set", { menu })),
+	/**
+	 *  Sets the menu bar with the given texts (macOS; elsewhere nothing). Sync on purpose: runs on the main
+	 *  thread, where native menus live. Passive: the UI calls it at start, not the user.
+	 */
+	appMenuSet: (labels: AppMenuLabels) => typedError<null, ApiError>(__TAURI_INVOKE("app_menu_set", { labels })),
 	/**  Version / platform / arch. */
 	appInfo: () => typedError<AppInfo, ApiError>(__TAURI_INVOKE("app_info")),
 	/**  Opens an http/https URL in the system browser (validated). */
@@ -266,6 +271,7 @@ export const commands = {
 
 /** Events */
 export const events = {
+	appMenuAction: makeEvent<AppMenuPicked, AppMenuPicked>("app-menu://action"),
 	hostWindowReturn: makeEvent<HostWindowReturn, HostWindowReturn>("host-window://return"),
 	trayOpenHost: makeEvent<TrayOpenHost, TrayOpenHost>("tray://open-host"),
 	treeChanged: makeEvent<TreeChanged, TreeChanged>("tree://changed"),
@@ -333,6 +339,113 @@ export type AppInfo = {
 	platform: string,
 	/**  `aarch64` | `x86_64` | …. */
 	arch: string,
+};
+
+/**  An app item of the menu bar; the UI does what the same button or key does. */
+export type AppMenuAction = 
+/**  Open the update sheet. */
+"check_update" | 
+/**  Open the settings (⌘,). */
+"settings" | 
+/**  Open the «Keys» page. */
+"keys" | 
+/**  New tab (⌘T). */
+"new_tab" | 
+/**  To the local terminal. */
+"local_terminal" | 
+/**  New server form. */
+"new_host" | 
+/**  Close the tab (⌘W); with no tab — the window, as before. */
+"close_tab" | 
+/**  Show / hide the left menu (⌘B). */
+"toggle_sidebar" | 
+/**  Interface scale up (⌘⇧+). */
+"scale_in" | 
+/**  Interface scale down (⌘⇧−). */
+"scale_out" | 
+/**  Interface scale back to 100 % (⌘⇧0). */
+"scale_reset" | 
+/**  The keyboard shortcuts window. */
+"hotkeys" | 
+/**  The project page on GitHub. */
+"project_page";
+
+/**  Every text of the menu, already translated by the UI. */
+export type AppMenuLabels = {
+	/**  «О Wave Shell». */
+	about: string,
+	/**  «Проверить обновления…». */
+	check_update: string,
+	/**  «Настройки…». */
+	settings: string,
+	/**  «Ключи». */
+	keys: string,
+	/**  «Службы». */
+	services: string,
+	/**  «Скрыть Wave Shell». */
+	hide: string,
+	/**  «Скрыть остальные». */
+	hide_others: string,
+	/**  «Показать все». */
+	show_all: string,
+	/**  «Завершить Wave Shell». */
+	quit: string,
+	/**  «Файл». */
+	file: string,
+	/**  «Новая вкладка». */
+	new_tab: string,
+	/**  «Локальный терминал». */
+	local_terminal: string,
+	/**  «Новый сервер…». */
+	new_host: string,
+	/**  «Закрыть вкладку». */
+	close_tab: string,
+	/**  «Правка». */
+	edit: string,
+	/**  «Отменить». */
+	undo: string,
+	/**  «Повторить». */
+	redo: string,
+	/**  «Вырезать». */
+	cut: string,
+	/**  «Копировать». */
+	copy: string,
+	/**  «Вставить». */
+	paste: string,
+	/**  «Выбрать всё». */
+	select_all: string,
+	/**  «Вид». */
+	view: string,
+	/**  «Показать или скрыть левое меню». */
+	toggle_sidebar: string,
+	/**  «Крупнее». */
+	scale_in: string,
+	/**  «Мельче». */
+	scale_out: string,
+	/**  «Обычный размер». */
+	scale_reset: string,
+	/**  «Полноэкранный режим». */
+	fullscreen: string,
+	/**  «Окно». */
+	window: string,
+	/**  «Свернуть». */
+	minimize: string,
+	/**  «Увеличить». */
+	zoom: string,
+	/**  «Справка». */
+	help: string,
+	/**  «Горячие клавиши». */
+	hotkeys: string,
+	/**  «Страница проекта на GitHub». */
+	project_page: string,
+};
+
+/**  A menu bar item was picked. Every window hears it (the UI listens globally); only `window` acts on it. */
+export type AppMenuPicked = {
+	/**  What to do. */
+	action: AppMenuAction,
+	/**  Label of the window in front (`main` when none is). */
+	window: string,
 };
 
 /**  One certificate. */

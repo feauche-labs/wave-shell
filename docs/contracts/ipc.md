@@ -222,6 +222,7 @@ pub enum ApiError {
 | command | args | returns |
 |---|---|---|
 | `tray_set` | `menu: TrayMenu\|null` | `null` — shows/updates the menu-bar icon (`TrayMenu { tooltip, items: TrayItem[] (≤ 24), open_label, quit_label }`, `TrayItem { host_id: HostId\|null, text }`); `null` removes it. Strings are rendered as native menu text, control chars stripped, ≤ 120 chars. Vault lock drops the server lines on the backend side. Passive. ADR-013. |
+| `app_menu_set` | `labels: AppMenuLabels` | `null` — Wave: sets the macOS menu bar (Wave Shell / File / Edit / View / Window / Help) with the texts the UI sends in its language; standard items stay native, the app's own items come back as `app-menu://action`. Windows/Linux/mobile: nothing (no app menu bar). Control chars stripped, ≤ 80 chars. Passive. |
 | `app_info` | — | `AppInfo { version, platform, arch }` |
 | `open_external` | `url: string` (http/https only, validated) | `null` |
 | `app_notify` | `title: string, body: string` (desktop: system notification shown by the backend; control chars dropped, ≤ 120 / 300 chars; ADR-017) | `null` (`Unsupported` on mobile or when the OS refuses) |
@@ -234,6 +235,7 @@ pub enum ApiError {
 | `update://available` | `UpdateAvailable` | `{ version, notes: string\|null }` | `updateAvailable` |
 | `tray://open-host` | `TrayOpenHost` | `{ host_id }` | `trayOpenHost` |
 | `host-window://return` | `HostWindowReturn` | `{ label, host_id, view }` (to `main` only, ADR-027) | `hostWindowReturn` |
+| `app-menu://action` | `AppMenuPicked` | `{ action: AppMenuAction, window }` — Wave: an app item of the menu bar was picked; every window hears it, only `window` (the one in front) acts | `appMenuAction` |
 
 ## Rules
 - No command returns secret material, except `identity_reveal_password` on an explicit user click (ADR-021).

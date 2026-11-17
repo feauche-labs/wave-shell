@@ -1,5 +1,5 @@
 /** Mock: Docker containers, certificates and the menu-bar icon (ADR-012, ADR-013). */
-import type { Commands, Container, TrayMenu } from '../types';
+import type { AppMenuLabels, Commands, Container, TrayMenu } from '../types';
 import { delay, ok } from './state';
 
 const MIB = 1024 ** 2;
@@ -255,6 +255,13 @@ export const certList: Commands['certList'] = async () => {
     denied: 0,
     no_openssl: false
   });
+};
+
+/** Wave: the last menu bar texts the UI sent (the demo has no menu bar). */
+export let lastAppMenu: AppMenuLabels | null = null;
+export const appMenuSet: Commands['appMenuSet'] = async (labels) => {
+  lastAppMenu = labels;
+  return ok(null);
 };
 
 /** The last menu the UI sent, for tests and the dev console. */
