@@ -122,8 +122,11 @@ pub struct AppMenuPicked {
 }
 
 const ID_PREFIX: &str = "wave-menu:";
+// Used only where the menu is built (macOS); elsewhere they would be dead code.
+#[cfg(target_os = "macos")]
 const MAX_TEXT: usize = 80;
 
+#[cfg(target_os = "macos")]
 fn clip(s: &str) -> String {
     s.chars()
         .filter(|c| !c.is_control())
@@ -131,6 +134,7 @@ fn clip(s: &str) -> String {
         .collect()
 }
 
+#[cfg(any(target_os = "macos", test))]
 fn item_id(a: AppMenuAction) -> String {
     let name = serde_json::to_value(a)
         .ok()
@@ -144,7 +148,8 @@ fn parse_id(id: &str) -> Option<AppMenuAction> {
     serde_json::from_value(serde_json::Value::String(name.to_owned())).ok()
 }
 
-/// Builds and sets the menu bar (macOS); elsewhere does nothing.
+/// Builds and sets the menu bar (macOS); elsewhere does nothing (so there it always succeeds).
+#[cfg_attr(not(target_os = "macos"), allow(clippy::unnecessary_wraps))]
 pub fn apply(app: &AppHandle, labels: &AppMenuLabels) -> tauri::Result<()> {
     #[cfg(target_os = "macos")]
     {

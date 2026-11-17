@@ -6,7 +6,10 @@
 /// Shows or hides the window buttons of the calling window (macOS; elsewhere nothing). Passive.
 #[tauri::command]
 #[specta::specta]
-#[allow(clippy::needless_pass_by_value)] // Tauri injects the window by value.
+#[allow(clippy::needless_pass_by_value)]
+// Tauri injects the window by value.
+// Elsewhere it does nothing, so it always succeeds; the command keeps one signature on every system.
+#[cfg_attr(not(target_os = "macos"), allow(clippy::unnecessary_wraps))]
 pub fn wave_window_buttons(
     window: tauri::WebviewWindow,
     visible: bool,
