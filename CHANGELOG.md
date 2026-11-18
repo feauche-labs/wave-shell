@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/feauche-labs/wave-shell/compare/v1.7.0...v1.8.0) (2026-11-18)
+
+
+### Добавлено
+
+* кнопки окна как в Arc — свои, в шапке меню, выезжают и уезжают вместе с ним; выезжающее меню темнее ([8b7f0fb](https://github.com/feauche-labs/wave-shell/commit/8b7f0fb0f2f79f44a032d8e046a0400152f4f667))
+
 ## [1.7.0](https://github.com/feauche-labs/wave-shell/compare/v1.6.1...v1.7.0) (2026-11-17)
 
 
