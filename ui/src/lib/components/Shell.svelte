@@ -52,19 +52,28 @@
   const windowControls = native && !isApple && !/Android/.test(navigator.userAgent);
   let narrow = $state(false);
 
-  // Wave: the system window buttons follow the left menu (like in Arc): shown with it, hidden with it — after
-  // it has slid away. Back on when the shell goes (lock screen).
-  $effect(() => {
+  // Wave: in the main window the macOS window buttons are our own, in the header of the left menu
+  // (TrafficLights) — they slide with it, like in Arc. The system ones stay hidden (hidden again after a resize or
+  // full screen, in case AppKit brings them back); back on when the shell goes (lock screen).
+  onMount(() => {
     if (!mac || isHostWindow) return;
-    const show = ui.sidebarOpen || wavePeek.open;
-    const t = setTimeout(
-      () => void api.waveWindowButtons(show).catch(() => undefined),
-      show ? 0 : 180
-    );
-    return () => clearTimeout(t);
-  });
-  onMount(() => () => {
-    if (mac && !isHostWindow) void api.waveWindowButtons(true).catch(() => undefined);
+    const hide = () => void api.waveWindowButtons(false).catch(() => undefined);
+    let queued = false;
+    const off = getCurrentWindow()
+      .onResized(() => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => {
+          queued = false;
+          hide();
+        });
+      })
+      .catch(() => undefined);
+    hide();
+    return () => {
+      void off.then((stop) => stop?.()).catch(() => undefined);
+      void api.waveWindowButtons(true).catch(() => undefined);
+    };
   });
 
   // Wave: the app items of the macOS menu bar (texts: +layout) do what the same buttons and keys do.
@@ -342,11 +351,18 @@
       visibility 0s linear 200ms;
   }
   /* Over a terminal the glass needs more body and a real shadow. */
+  /* Wave: a touch darker than the pinned menu, so it stands apart from what is under it (like in Arc). */
   .shell:not(.narrow) .sidebar:not(.open) :global(.side) {
-    background: color-mix(in oklab, var(--sidebar) 55%, var(--bg));
+    background: var(--wave-peek);
     box-shadow:
       0 0 0 0.5px var(--sidebar-edge),
       0 18px 48px -12px rgb(0 0 0 / 0.45);
+  }
+  :global(:root) {
+    --wave-peek: rgb(233 233 236);
+  }
+  :global(:root[data-theme='dark']) {
+    --wave-peek: rgb(22 22 24);
   }
   .shell:not(.narrow) .sidebar.peek {
     visibility: visible;

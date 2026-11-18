@@ -34,6 +34,7 @@
   import { mod } from '$lib/util/platform';
   import Logo from './Logo.svelte';
   import Tree from './Tree.svelte';
+  import TrafficLights from '$lib/wave/TrafficLights.svelte';
 
   let { mac = false }: { mac?: boolean } = $props();
 
@@ -114,9 +115,10 @@
 </script>
 
 <aside class="side" aria-label={m.sidebar_hosts()}>
-  <div class="top" class:mac data-tauri-drag-region>
-    <!-- Wave: like in Arc — the header holds the window buttons (macOS) and the menu button; search moved to
-         the top bar (TabBar). Slid out, the button keeps the menu open. -->
+  <div class="top" data-tauri-drag-region>
+    <!-- Wave: like in Arc — the header holds the window buttons (macOS, our own: they slide with the menu) and
+         the menu button; search moved to the top bar (TabBar). Slid out, the button keeps the menu open. -->
+    {#if mac}<TrafficLights />{/if}
     <button
       class="icon-btn side-toggle"
       onclick={() => (ui.sidebarOpen = !ui.sidebarOpen)}
@@ -251,9 +253,6 @@
     height: calc(var(--toolbar-h) - 8px);
     padding: 0 8px;
     flex: none;
-  }
-  .top.mac {
-    padding-left: 76px;
   }
   nav {
     display: grid;

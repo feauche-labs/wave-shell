@@ -1,7 +1,7 @@
-//! Wave: the macOS window buttons (close / minimise / zoom) follow the left menu, like in Arc. The menu is
-//! hidden — the buttons hide too and the top bar starts at the window edge; the menu is open or slides out —
-//! they are back, in its header. Tauri has no call for it; the calls below are safe ones: the window is found
-//! among `NSApp.windows` by comparing addresses, nothing is dereferenced by hand.
+//! Wave: the macOS window buttons (close / minimise / zoom) of the main window are drawn by the interface, in the
+//! header of the left menu (`TrafficLights.svelte`), so they slide with it like in Arc; the system ones are hidden
+//! here. Tauri has no call for it; the calls below are safe ones: the window is found among `NSApp.windows` by
+//! comparing addresses, nothing is dereferenced by hand.
 
 /// Shows or hides the window buttons of the calling window (macOS; elsewhere nothing). Passive.
 #[tauri::command]
