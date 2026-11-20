@@ -982,5 +982,13 @@
   "wave_menu_zoom": "Zoom",
   "wave_menu_help": "Help",
   "wave_menu_project_page": "Project Page on GitHub",
-  "wave_sidebar_pin": "Keep the sidebar open"
+  "wave_sidebar_pin": "Keep the sidebar open",
+  "sort_title": "Sort",
+  "sort_manual": "Manual",
+  "sort_overview_default": "Open first",
+  "sort_name": "By name",
+  "sort_last": "By last login",
+  "sort_country": "By country",
+  "dash_copy_address": "Copy address",
+  "dash_address_copied": "Copied {address}"
 }

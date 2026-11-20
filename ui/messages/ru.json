@@ -982,5 +982,13 @@
   "wave_menu_zoom": "Изменить масштаб окна",
   "wave_menu_help": "Справка",
   "wave_menu_project_page": "Страница проекта на GitHub",
-  "wave_sidebar_pin": "Закрепить меню"
+  "wave_sidebar_pin": "Закрепить меню",
+  "sort_title": "Сортировка",
+  "sort_manual": "Вручную",
+  "sort_overview_default": "Сначала открытые",
+  "sort_name": "По имени",
+  "sort_last": "По последнему входу",
+  "sort_country": "По стране",
+  "dash_copy_address": "Скопировать адрес",
+  "dash_address_copied": "Адрес {address} скопирован"
 }
