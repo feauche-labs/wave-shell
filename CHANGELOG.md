@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/feauche-labs/wave-shell/compare/v1.8.0...v1.8.1) (2026-11-20)
+
+
+### Из iBC Shell
+
+* iBC Shell 2.0.3 — сортировка хостов (имя, последний вход, страна) и копирование адреса в «Сводке»; закреплены версии Rust и проверки зависимостей ([9de2f18](https://github.com/feauche-labs/wave-shell/commit/9de2f180e6333bf446fb88d8077c5decb19fe565))
+
 ## [1.8.0](https://github.com/feauche-labs/wave-shell/compare/v1.7.0...v1.8.0) (2026-11-18)
 
 
